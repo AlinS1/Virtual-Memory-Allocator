@@ -100,6 +100,7 @@ int main(void)
 					dealloc_arena(arena);
 					free(arena);
 					arena = NULL;
+					exit(0);
 					break;
 
 				case 3:	 // ALLOC_BLOCK

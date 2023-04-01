@@ -83,7 +83,7 @@ void alloc_block(arena_t *arena, const uint64_t address, const uint64_t size)
 		return;
 	}
 	uint64_t end_address_new = address + size - 1;
-	
+
 	if (address + 1 > arena->arena_size) {
 		printf("The allocated address is outside the size of arena\n");
 		return;
@@ -207,49 +207,144 @@ void alloc_block(arena_t *arena, const uint64_t address, const uint64_t size)
 
 void free_block(arena_t *arena, const uint64_t address)
 {
+	if (!arena ||
+		arena->alloc_list->total_elements == 0) {  // Nu avem ce sa freeuim
+		printf("Invalid address for free.\n");
+		return;
+	}
+
 	node_t *curr = arena->alloc_list->head;
 	for (unsigned int i = 0; i < arena->alloc_list->total_elements; i++) {
 		block_t *curr_block = (block_t *)curr->data;
 		uint64_t curr_ending = curr_block->start_address + curr_block->size - 1;
-		if (curr_block->start_address <= address && address <= curr_ending) { //in ce bloc e
+		if (curr_block->start_address <= address &&
+			address <= curr_ending) {  // gasim in ce block e
+			list_t *minib_list = (list_t *)curr_block->miniblock_list;
+			node_t *minib_curr_node = minib_list->head;
 
-			if (curr_block->size == 1) {
-				// dealloc tot block ul ca are doar un element
-				list_t *mb_list = (list_t *)curr_block->miniblock_list;
-				ll_free(&mb_list);
-				ll_remove_nth_node(arena->alloc_list, 0);
-				free(curr->data);
-				curr->data = NULL;
-				free(curr);
-				curr = NULL;
-				return;
-			}
-			if (curr_block->start_address == address) {
-				// dealocam doar primul miniblock
-				list_t *mb_list = (list_t *)curr_block->miniblock_list;
-				node_t *removed_node = ll_remove_nth_node(mb_list, 0);
-				if (removed_node->data) {
-					free(removed_node->data);
-					removed_node->data = NULL;
+			// // Aici e ok.
+			// for (unsigned int j = 0; j < minib_list->total_elements;
+			// 	 j++) {	 // gasire miniblock
+			// 	miniblock_t *minib_curr = (miniblock_t *)minib_curr_node->data;
+			// 	printf("Ad:%lX Size:%lX\n", minib_curr->start_address,
+			// 		   minib_curr->size);
+			// 	minib_curr_node=minib_curr_node->next;
+			// }
+			// printf("HOPA");
+			// //
+
+			for (unsigned int j = 0; j < minib_list->total_elements;
+				 j++) {	 // gasire miniblock
+				miniblock_t *minib_curr = (miniblock_t *)minib_curr_node->data;
+
+				if (minib_curr->start_address == address) {	 // gasit
+					// printf("MB gasit:%lX %lX\n", minib_curr->start_address,
+					//	   minib_curr->size);
+					if (minib_list->total_elements == 1) {
+						// list de mini are un sg elem
+						// dealloc tot block ul ca are doar un element
+						// curr_block->size -= minib_curr->size; oricum e
+						// free
+						ll_free(&minib_list);
+						ll_remove_nth_node(arena->alloc_list, i);
+						free(curr->data);
+						curr->data = NULL;
+						free(curr);
+						curr = NULL;
+						return;
+					}
+
+					// inceput sau end of block;
+
+					if (j == 0 || j == minib_list->total_elements - 1) {
+						if (j == 0)
+							curr_block->start_address += minib_curr->size;
+
+						curr_block->size -= minib_curr->size;
+
+						node_t *removed_node =
+							ll_remove_nth_node(minib_list, j);
+						if (removed_node->data) {
+							free(removed_node->data);
+							removed_node->data = NULL;
+						}
+						free(removed_node);
+						removed_node = NULL;
+
+						return;
+					}
+
+					// in mijloc;  nr miniblock = j, nr block = i
+
+					// not lose the next
+					minib_curr_node = minib_curr_node->next;
+
+					// free miniblock to be freed
+					curr_block->size -= minib_curr->size;
+					node_t *removed_node = ll_remove_nth_node(minib_list, j);
+					if (removed_node->data) {
+						free(removed_node->data);
+						removed_node->data = NULL;
+					}
+					free(removed_node);
+					removed_node = NULL;
+
+					// create new block
+					block_t *new_block = malloc(sizeof(block_t));
+					new_block->size = 0;
+
+					// first miniblock
+					miniblock_t *new_minib =
+						(miniblock_t *)minib_curr_node->data;
+					new_block->start_address = new_minib->start_address;
+
+					new_block->miniblock_list = ll_create(sizeof(miniblock_t));
+					list_t *new_minib_list =
+						(list_t *)new_block->miniblock_list;
+
+					//
+					// printf("Minib elem:%d\n", minib_list->total_elements);
+					// for (unsigned idx = j; idx < minib_list->total_elements;
+					// 	 idx++) {
+					// 	new_minib = (miniblock_t *)minib_curr_node->data;
+					// 	printf("TEST:%lX %lX\n", new_minib->start_address,
+					// 		   new_minib->size);
+					// 	minib_curr_node = minib_curr_node->next;
+					// }
+					// return;
+					//
+					node_t *next = NULL;
+					if (minib_curr_node->next)
+						next = minib_curr_node->next;
+					while (minib_list->total_elements - j && minib_curr_node) {
+						ll_add_nth_node(new_minib_list,
+										new_minib_list->total_elements,
+										minib_curr_node->data);
+						new_minib = (miniblock_t *)minib_curr_node->data;
+						new_block->size += new_minib->size;
+						// printf("Telems:%d\n", minib_list->total_elements);
+						removed_node = ll_remove_nth_node(minib_list, j);
+						if (removed_node->data) {
+							free(removed_node->data);
+							removed_node->data = NULL;
+						}
+						free(removed_node);
+						removed_node = NULL;
+						if (next)
+							minib_curr_node = next;
+						if (minib_curr_node->next)
+							next = next->next;
+					}
+
+					curr_block->size -= new_block->size;
+
+					ll_add_nth_node(arena->alloc_list, i + 1, new_block);
+
+					return;
 				}
-				free(removed_node);
-				removed_node = NULL;
-				return;
+
+				minib_curr_node = minib_curr_node->next;
 			}
-			if (curr_ending == address) {
-				list_t *mb_list = (list_t *)curr_block->miniblock_list;
-				node_t *removed_node =
-					ll_remove_nth_node(mb_list, mb_list->total_elements);
-				if (removed_node->data) {
-					free(removed_node->data);
-					removed_node->data = NULL;
-				}
-				free(removed_node);
-				removed_node = NULL;
-				return;
-			}
-			// in mijloc TODO
-			return;
 		}
 		curr = curr->next;
 	}
@@ -386,7 +481,8 @@ node_t *ll_remove_nth_node(list_t *list, unsigned int n)
 		return NULL;
 	}
 
-	/* n >= list->size - 1 inseamna eliminarea nodului de la finalul listei. */
+	/* n >= list->size - 1 inseamna eliminarea nodului de la finalul listei.
+	 */
 	if (n > list->total_elements - 1) {
 		n = list->total_elements - 1;
 	}
