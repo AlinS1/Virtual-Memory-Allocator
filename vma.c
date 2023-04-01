@@ -222,17 +222,6 @@ void free_block(arena_t *arena, const uint64_t address)
 			list_t *minib_list = (list_t *)curr_block->miniblock_list;
 			node_t *minib_curr_node = minib_list->head;
 
-			// // Aici e ok.
-			// for (unsigned int j = 0; j < minib_list->total_elements;
-			// 	 j++) {	 // gasire miniblock
-			// 	miniblock_t *minib_curr = (miniblock_t *)minib_curr_node->data;
-			// 	printf("Ad:%lX Size:%lX\n", minib_curr->start_address,
-			// 		   minib_curr->size);
-			// 	minib_curr_node=minib_curr_node->next;
-			// }
-			// printf("HOPA");
-			// //
-
 			for (unsigned int j = 0; j < minib_list->total_elements;
 				 j++) {	 // gasire miniblock
 				miniblock_t *minib_curr = (miniblock_t *)minib_curr_node->data;
@@ -243,8 +232,6 @@ void free_block(arena_t *arena, const uint64_t address)
 					if (minib_list->total_elements == 1) {
 						// list de mini are un sg elem
 						// dealloc tot block ul ca are doar un element
-						// curr_block->size -= minib_curr->size; oricum e
-						// free
 						ll_free(&minib_list);
 						ll_remove_nth_node(arena->alloc_list, i);
 						free(curr->data);
@@ -302,21 +289,8 @@ void free_block(arena_t *arena, const uint64_t address)
 					list_t *new_minib_list =
 						(list_t *)new_block->miniblock_list;
 
-					//
-					// printf("Minib elem:%d\n", minib_list->total_elements);
-					// for (unsigned idx = j; idx < minib_list->total_elements;
-					// 	 idx++) {
-					// 	new_minib = (miniblock_t *)minib_curr_node->data;
-					// 	printf("TEST:%lX %lX\n", new_minib->start_address,
-					// 		   new_minib->size);
-					// 	minib_curr_node = minib_curr_node->next;
-					// }
-					// return;
-					//
-					node_t *next = NULL;
-					if (minib_curr_node->next)
-						next = minib_curr_node->next;
-					while (minib_list->total_elements - j && minib_curr_node) {
+					node_t *next = minib_curr_node->next;
+					while (minib_list->total_elements - j) {
 						ll_add_nth_node(new_minib_list,
 										new_minib_list->total_elements,
 										minib_curr_node->data);
@@ -330,9 +304,12 @@ void free_block(arena_t *arena, const uint64_t address)
 						}
 						free(removed_node);
 						removed_node = NULL;
-						if (next)
-							minib_curr_node = next;
-						if (minib_curr_node->next)
+
+						if (minib_list->total_elements - j == 0)
+							break;
+
+						minib_curr_node = next;
+						if (next->next)
 							next = next->next;
 					}
 
