@@ -112,6 +112,7 @@ void alloc_block(arena_t *arena, const uint64_t address, const uint64_t size)
 	// Add to the arena
 	if (arena->alloc_list->total_elements == 0) {
 		ll_add_nth_node(arena->alloc_list, 0, new_block);
+		free(new_block);
 		return;
 	}
 
@@ -125,7 +126,7 @@ void alloc_block(arena_t *arena, const uint64_t address, const uint64_t size)
 		} else {
 			ll_add_nth_node(arena->alloc_list, 0, new_block);
 		}
-
+		free(new_block);
 		return;
 	}
 
@@ -143,6 +144,7 @@ void alloc_block(arena_t *arena, const uint64_t address, const uint64_t size)
 			ll_add_nth_node(arena->alloc_list,
 							arena->alloc_list->total_elements, new_block);
 		}
+		free(new_block);
 		return;
 	}
 	// daca e last-ul fix inainte?
@@ -189,6 +191,7 @@ void alloc_block(arena_t *arena, const uint64_t address, const uint64_t size)
 						}
 					}
 				}
+				free(new_block);
 				return;
 			}
 			previous = previous->next;
@@ -209,7 +212,7 @@ void free_block(arena_t *arena, const uint64_t address)
 		block_t *curr_block = (block_t *)curr->data;
 		uint64_t curr_ending = curr_block->start_address + curr_block->size - 1;
 		if (curr_block->start_address <= address && address <= curr_ending) { //in ce bloc e
-		
+
 			if (curr_block->size == 1) {
 				// dealloc tot block ul ca are doar un element
 				list_t *mb_list = (list_t *)curr_block->miniblock_list;
