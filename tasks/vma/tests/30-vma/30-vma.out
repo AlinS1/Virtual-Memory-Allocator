@@ -1,3 +1,1 @@
-Invalid command. Please try again.
-Invalid command. Please try again.
-Invalid command. Please try again.
+gcc -g -o vma main.c vma.c -Wall -Wextra -std=c99 -I.

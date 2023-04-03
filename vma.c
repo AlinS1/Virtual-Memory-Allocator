@@ -15,6 +15,7 @@ void dealloc_arena(arena_t *arena)
 		node_t *curr = arena->alloc_list->head;
 		block_t *curr_block = (block_t *)curr->data;
 		list_t *curr_mb_list = (list_t *)curr_block->miniblock_list;
+		// pt fiecare minib - free(rw->buffer)
 		ll_free(&curr_mb_list);
 		ll_remove_nth_node(arena->alloc_list, 0);
 		free(curr->data);
@@ -105,6 +106,7 @@ void alloc_block(arena_t *arena, const uint64_t address, const uint64_t size)
 	miniblock_l->size = size;
 	miniblock_l->start_address = address;
 	miniblock_l->perm = 6;	// RW- ???
+	miniblock_l->rw_buffer = NULL;
 	ll_add_nth_node(new_block->miniblock_list, 0,
 					miniblock_l);  // free old_data ???
 	free(miniblock_l);			   //???
@@ -147,7 +149,7 @@ void alloc_block(arena_t *arena, const uint64_t address, const uint64_t size)
 		free(new_block);
 		return;
 	}
-	// daca e last-ul fix inainte?
+
 	if (arena->alloc_list->total_elements >= 2) {
 		node_t *previous = first;
 		node_t *next_n = first->next;
@@ -159,6 +161,7 @@ void alloc_block(arena_t *arena, const uint64_t address, const uint64_t size)
 			uint64_t prev_end = prev_b->start_address + prev_b->size - 1;
 			block_t *next_b = (block_t *)next_n->data;
 			uint64_t next_start = next_b->start_address;
+
 			if (prev_end < new_block->start_address &&
 				end_address_new < next_start) {
 				if ((prev_end == new_block->start_address - 1) &&
@@ -197,13 +200,14 @@ void alloc_block(arena_t *arena, const uint64_t address, const uint64_t size)
 			previous = previous->next;
 			next_n = next_n->next;
 			k++;
-		} while (next_n->next);
+		} while (next_n);
 	}
 	// Reach error only if a free zone is not found.
 	printf("This zone was already allocated.\n");
 	ll_free(new_block->miniblock_list);
 	free(new_block);
 }
+
 
 void free_block(arena_t *arena, const uint64_t address)
 {
@@ -217,8 +221,8 @@ void free_block(arena_t *arena, const uint64_t address)
 	for (unsigned int i = 0; i < arena->alloc_list->total_elements; i++) {
 		block_t *curr_block = (block_t *)curr->data;
 		uint64_t curr_ending = curr_block->start_address + curr_block->size - 1;
-		if (curr_block->start_address <= address &&
-			address <= curr_ending) {  // gasim in ce block e
+		if (curr_block->start_address <= address && address <= curr_ending) {
+			// gasim in ce block e
 			list_t *minib_list = (list_t *)curr_block->miniblock_list;
 			node_t *minib_curr_node = minib_list->head;
 
@@ -329,14 +333,173 @@ void free_block(arena_t *arena, const uint64_t address)
 	printf("Invalid address for free.\n");
 }
 
-// void read(arena_t *arena, uint64_t address, uint64_t size)
-// {
-// }
+void read(arena_t *arena, uint64_t address, uint64_t size)
+{
+	if (!arena || arena->alloc_list->total_elements == 0) {
+		printf("Invalid address for read.\n");
+		return;
+	}
 
-// void write(arena_t *arena, const uint64_t address, const uint64_t size,
-// 		   int8_t *data)
-// {
-// }
+	block_t *curr_block = find_block(arena, address);
+	if (!curr_block) {
+		printf("Invalid address for read.\n");
+		return;
+	}
+
+	list_t *minib_list = (list_t *)curr_block->miniblock_list;
+	node_t *minib_curr_node = minib_list->head;	 // nod de minib
+	uint64_t end_block_curr = curr_block->start_address + curr_block->size - 1;
+
+	for (unsigned int j = 0; j < minib_list->total_elements; j++) {
+		// gasire miniblock
+		miniblock_t *minib_curr =
+			(miniblock_t *)minib_curr_node->data;  // minib
+		unsigned int end_minib =
+			minib_curr->start_address + minib_curr->size - 1;
+		if (minib_curr->start_address <= address &&
+			address <= end_minib) {	 // add poate fi in mijlocul unui mb
+			// gasit miniblock
+
+			if (end_block_curr - address + 1 < size) {
+				printf("Warning: size was bigger than the block size.");
+				printf(" Reading %ld characters.\n",
+					   end_block_curr - address + 1);
+			}
+
+			unsigned int idx_total_read = 0;
+
+			if (minib_curr->start_address != address) {
+				unsigned int start = minib_curr->start_address;
+				unsigned int which_byte = 0;
+				while (start != address) {
+					which_byte++;
+					start++;
+				}
+
+				char *data = (char *)minib_curr->rw_buffer;
+				while (which_byte < minib_curr->size && idx_total_read < size) {
+					printf("%c", data[which_byte]);
+					which_byte++;
+					idx_total_read++;
+				}
+				j++;
+			}
+
+			for (unsigned int l = j; l < minib_list->total_elements; l++) {
+				unsigned int idx = 0;
+				char *data = (char *)minib_curr->rw_buffer;
+
+				while (idx < minib_curr->size && idx_total_read < size) {
+					printf("%c", data[idx]);
+					idx++;
+					idx_total_read++;
+				}
+
+				if (l == minib_list->total_elements - 1)
+					break;
+				minib_curr_node = minib_curr_node->next;
+				minib_curr = (miniblock_t *)minib_curr_node->data;
+			}
+			printf("\n");
+			return;
+		}
+	}
+
+	printf("Invalid address for read.\n");
+}
+
+void write(arena_t *arena, const uint64_t address, const uint64_t size,
+		   int8_t *data)
+{
+	char *data_string = malloc(sizeof(char) * size);
+	// printf("--%s--\n",(char*)data);
+
+	if (!data) {
+		data_string[0] = '\n';
+	}
+
+	if (data)
+		for (unsigned int i = 0; i < strlen((char *)data); i++) {
+			data_string[i] = (char)data[i];
+		}
+
+	if (strlen(data_string) < size) {
+		if (data_string[0] != '\n')
+			data_string[strlen(data_string)] = '\n';
+		while (strlen(data_string) < size) {
+			fscanf(stdin, "%c", &data_string[strlen(data_string)]);
+		}  //??? Acum sau mai incolo???
+		char last_enter;
+		fscanf(stdin, "%c", &last_enter);
+	}
+
+	if (!arena || arena->alloc_list->total_elements == 0) {
+		printf("Invalid address for write.\n");
+		return;
+	}
+
+	block_t *curr_block = find_block(arena, address);
+	if (!curr_block) {
+		printf("Invalid address for write.\n");
+		return;
+	}
+
+	list_t *minib_list = (list_t *)curr_block->miniblock_list;
+	node_t *minib_curr_node = minib_list->head;	 // nod de minib
+	uint64_t end_block_curr = curr_block->start_address + curr_block->size - 1;
+
+	for (unsigned int j = 0; j < minib_list->total_elements; j++) {
+		// gasire miniblock
+		miniblock_t *minib_curr =
+			(miniblock_t *)minib_curr_node->data;  // minib
+
+		if (minib_curr->start_address == address) {
+			// gasit miniblock
+
+			if (end_block_curr - minib_curr->start_address + 1 < size) {
+				printf(
+					"Warning: size was bigger than the block "
+					"size.");
+				printf(" Writing %ld characters.\n",
+					   end_block_curr - minib_curr->start_address + 1);
+			}
+
+			unsigned int idx_data = 0;
+
+			for (unsigned int l = j; l < minib_list->total_elements; l++) {
+				unsigned int idx_minib = 0;
+				minib_curr->rw_buffer = malloc(minib_curr->size * sizeof(char));
+
+				while (idx_minib < minib_curr->size &&
+					   idx_data < strlen(data_string)) {
+					// printf("TEST:%s\n", data_string + idx_data);
+
+					if (strlen(data_string) - idx_data < minib_curr->size) {
+						memcpy(minib_curr->rw_buffer, data_string + idx_data,
+							   strlen(data_string) - idx_data);
+						idx_data += strlen(data_string) - idx_data;
+						idx_minib += strlen(data_string) - idx_data;
+					} else {
+						memcpy(minib_curr->rw_buffer, data_string + idx_data,
+							   minib_curr->size);
+						idx_data += minib_curr->size;
+						idx_minib += minib_curr->size;
+					}
+				}
+
+				if (l == minib_list->total_elements - 1)
+					break;
+				minib_curr_node = minib_curr_node->next;
+				minib_curr = (miniblock_t *)minib_curr_node->data;
+				// TODO buffer init pe NULL;
+			}
+
+			return;
+		}
+	}
+
+	printf("Invalid address for write.\n");
+}
 
 void pmap(const arena_t *arena)
 {
@@ -396,9 +559,83 @@ void pmap(const arena_t *arena)
 	}
 }
 
-// void mprotect(arena_t *arena, uint64_t address, int8_t *permission)
-// {
-// }
+void mprotect(arena_t *arena, uint64_t address, int8_t *permission)
+{
+	int8_t perm = find_permission(permission);
+
+	block_t *curr_block = find_block(arena, address);
+	if (!curr_block) {
+		printf("Invalid address for mprotect.\n");
+		return;
+	}
+
+	list_t *minib_list = (list_t *)curr_block->miniblock_list;
+	node_t *minib_curr_node = minib_list->head;	 // nod de minib
+
+	for (unsigned int j = 0; j < minib_list->total_elements; j++) {
+		// gasire miniblock
+		miniblock_t *minib_curr =
+			(miniblock_t *)minib_curr_node->data;  // minib
+		uint64_t end_minib = minib_curr->size + minib_curr->size - 1;
+		if (minib_curr->start_address <= address && address <= end_minib) {
+			// address poate fi in mijlocul unui mb
+
+			minib_curr->perm = perm;
+			printf("Perm:%d\n", minib_curr->perm);
+		}
+	}
+}
+
+int transform_permission(char *data)
+{
+	if (strcmp(data, "PROT_NONE") == 0)
+		return 0;
+	if (strcmp(data, "PROT_READ") == 0)
+		return 4;
+	if (strcmp(data, "PROT_WRITE") == 0)
+		return 2;
+	if (strcmp(data, "PROT_EXEC") == 0)
+		return 1;
+	return -1;
+}
+
+int find_permission(int8_t *permission)
+{
+	int final_permission = 0;
+	char *data = (char *)permission;
+	char delim[] = "| \n";
+	char *perm = strtok(data, delim);
+	while (perm) {
+		int type = transform_permission(perm);
+
+		if (type == 0)
+			final_permission = 0;
+		if (type == 1 || type == 2 || type == 4)
+			final_permission += type;
+		perm = strtok(NULL, delim);
+	}
+
+	return final_permission;
+}
+
+block_t *find_block(arena_t *arena, const uint64_t address)
+{
+	node_t *curr = arena->alloc_list->head;	 // nod de block
+	for (unsigned int i = 0; i < arena->alloc_list->total_elements; i++) {
+		block_t *curr_block = (block_t *)curr->data;  // block
+		uint64_t curr_ending = curr_block->start_address + curr_block->size - 1;
+		if (curr_block->start_address <= address && address <= curr_ending) {
+			// gasit block
+			return curr_block;
+		}
+	}
+	return NULL;
+}
+
+// ===========
+// LINKED-LIST
+// ===========
+
 
 list_t *ll_create(unsigned int data_size)
 {
@@ -422,7 +659,8 @@ void ll_add_nth_node(list_t *list, unsigned int n, const void *new_data)
 		return;
 	}
 
-	/* n >= list->size inseamna adaugarea unui nou nod la finalul listei. */
+	/* n >= list->size inseamna adaugarea unui nou nod la finalul
+	 * listei. */
 	if (n > list->total_elements) {
 		n = list->total_elements;
 	}
@@ -458,7 +696,8 @@ node_t *ll_remove_nth_node(list_t *list, unsigned int n)
 		return NULL;
 	}
 
-	/* n >= list->size - 1 inseamna eliminarea nodului de la finalul listei.
+	/* n >= list->size - 1 inseamna eliminarea nodului de la finalul
+	 * listei.
 	 */
 	if (n > list->total_elements - 1) {
 		n = list->total_elements - 1;

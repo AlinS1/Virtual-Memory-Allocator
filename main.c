@@ -54,7 +54,7 @@ int check_parameters(int type, int nr_param)
 	if (type == 5 && nr_param != 3)	 // READ
 		ok = 0;
 
-	if (type == 6 && nr_param < 4)	// WRITE
+	if (type == 6 && nr_param < 3)	// WRITE
 		ok = 0;
 
 	if (type == 7 && nr_param != 1)	 // PMAP
@@ -118,9 +118,21 @@ int main(void)
 					break;
 
 				case 5:	 // READ
+					param = strtok(NULL, delim);
+					address = atol(param);
+					param = strtok(NULL, delim);
+					size = atol(param);
+					read(arena, address, size);
 					break;
 
 				case 6:	 // WRITE
+					param = strtok(NULL, delim);
+					address = atol(param);
+					param = strtok(NULL, delim);
+					size = atol(param);
+					param = strtok(NULL, "\n");
+					int8_t *data = (int8_t *)param;
+					write(arena, address, size, data);
 					break;
 
 				case 7:	 // PMAP
@@ -128,6 +140,11 @@ int main(void)
 					break;
 
 				case 8:	 // MPROTECT
+					param = strtok(NULL, delim);
+					address = atol(param);
+					param = strtok(NULL, "\n");
+					int8_t *permission = (int8_t *)param;
+					mprotect(arena,address,permission);
 					break;
 			}
 	}

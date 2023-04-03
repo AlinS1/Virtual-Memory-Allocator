@@ -1,30 +1,162 @@
-Invalid command. Please try again.
-Invalid command. Please try again.
-Invalid command. Please try again.
-Invalid command. Please try again.
-Invalid command. Please try again.
-Invalid command. Please try again.
-Invalid command. Please try again.
-Invalid command. Please try again.
-Invalid command. Please try again.
-The allocated address is outside the size of arena
-The allocated address is outside the size of arena
+Invalid address for write.
+Total memory: 0x38496D bytes
+Free memory: 0x38496D bytes
+Number of allocated blocks: 0
+Number of allocated miniblocks: 0
+Invalid address for write.
+Invalid address for write.
+Invalid address for write.
+Total memory: 0x38496D bytes
+Free memory: 0x38495D bytes
+Number of allocated blocks: 1
+Number of allocated miniblocks: 1
+
+Block 1 begin
+Zone: 0x122433 - 0x122443
+Miniblock 1:		0x122433		-		0x122443		| RW-
+Block 1 end
 Invalid address for free.
-Invalid address for free.
-Invalid address for free.
-The allocated address is outside the size of arena
-Invalid command. Please try again.
-Invalid command. Please try again.
-Invalid command. Please try again.
-The allocated address is outside the size of arena
-The allocated address is outside the size of arena
-Invalid command. Please try again.
-Invalid command. Please try again.
-Invalid command. Please try again.
-This zone was already allocated.
-Total memory: 0x204C51 bytes
-Free memory: 0x204C3F bytes
+Invalid address for write.
+Total memory: 0x38496D bytes
+Free memory: 0x3848FD bytes
 Number of allocated blocks: 3
 Number of allocated miniblocks: 3
 
-Block 1 beg
+Block 1 begin
+Zone: 0x122433 - 0x122443
+Miniblock 1:		0x122433		-		0x122443		| RW-
+Block 1 end
+
+Block 2 begin
+Zone: 0x1B6F96 - 0x1B6FD6
+Miniblock 1:		0x1B6F96		-		0x1B6FD6		| RW-
+Block 2 end
+
+Block 3 begin
+Zone: 0x1BF3F8 - 0x1BF418
+Miniblock 1:		0x1BF3F8		-		0x1BF418		| RW-
+Block 3 end
+Invalid address for free.
+Total memory: 0x38496D bytes
+Free memory: 0x3848FD bytes
+Number of allocated blocks: 3
+Number of allocated miniblocks: 3
+
+Block 1 begin
+Zone: 0x122433 - 0x122443
+Miniblock 1:		0x122433		-		0x122443		| RW-
+Block 1 end
+
+Block 2 begin
+Zone: 0x1B6F96 - 0x1B6FD6
+Miniblock 1:		0x1B6F96		-		0x1B6FD6		| RW-
+Block 2 end
+
+Block 3 begin
+Zone: 0x1BF3F8 - 0x1BF418
+Miniblock 1:		0x1BF3F8		-		0x1BF418		| RW-
+Block 3 end
+Invalid address for free.
+Invalid address for write.
+Total memory: 0x38496D bytes
+Free memory: 0x3848FD bytes
+Number of allocated blocks: 3
+Number of allocated miniblocks: 3
+
+Block 1 begin
+Zone: 0x122433 - 0x122443
+Miniblock 1:		0x122433		-		0x122443		| RW-
+Block 1 end
+
+Block 2 begin
+Zone: 0x1B6F96 - 0x1B6FD6
+Miniblock 1:		0x1B6F96		-		0x1B6FD6		| RW-
+Block 2 end
+
+Block 3 begin
+Zone: 0x1BF3F8 - 0x1BF418
+Miniblock 1:		0x1BF3F8		-		0x1BF418		| RW-
+Block 3 end
+Invalid address for write.
+Total memory: 0x38496D bytes
+Free memory: 0x3848FD bytes
+Number of allocated blocks: 3
+Number of allocated miniblocks: 3
+
+Block 1 begin
+Zone: 0x122433 - 0x122443
+Miniblock 1:		0x122433		-		0x122443		| RW-
+Block 1 end
+
+Block 2 begin
+Zone: 0x1B6F96 - 0x1B6FD6
+Miniblock 1:		0x1B6F96		-		0x1B6FD6		| RW-
+Block 2 end
+
+Block 3 begin
+Zone: 0x1BF3F8 - 0x1BF418
+Miniblock 1:		0x1BF3F8		-		0x1BF418		| RW-
+Block 3 end
+Invalid address for write.
+Total memory: 0x38496D bytes
+Free memory: 0x3848FD bytes
+Number of allocated blocks: 3
+Number of allocated miniblocks: 3
+
+Block 1 begin
+Zone: 0x122433 - 0x122443
+Miniblock 1:		0x122433		-		0x122443		| RW-
+Block 1 end
+
+Block 2 begin
+Zone: 0x1B6F96 - 0x1B6FD6
+Miniblock 1:		0x1B6F96		-		0x1B6FD6		| RW-
+Block 2 end
+
+Block 3 begin
+Zone: 0x1BF3F8 - 0x1BF418
+Miniblock 1:		0x1BF3F8		-		0x1BF418		| RW-
+Block 3 end
+Total memory: 0x38496D bytes
+Free memory: 0x3848FD bytes
+Number of allocated blocks: 3
+Number of allocated miniblocks: 3
+
+Block 1 begin
+Zone: 0x122433 - 0x122443
+Miniblock 1:		0x122433		-		0x122443		| RW-
+Block 1 end
+
+Block 2 begin
+Zone: 0x1B6F96 - 0x1B6FD6
+Miniblock 1:		0x1B6F96		-		0x1B6FD6		| RW-
+Block 2 end
+
+Block 3 begin
+Zone: 0x1BF3F8 - 0x1BF418
+Miniblock 1:		0x1BF3F8		-		0x1BF418		| RW-
+Block 3 end
+Invalid address for free.
+Total memory: 0x38496D bytes
+Free memory: 0x3848F9 bytes
+Number of allocated blocks: 4
+Number of allocated miniblocks: 4
+
+Block 1 begin
+Zone: 0xD9750 - 0xD9754
+Miniblock 1:		0xD9750		-		0xD9754		| RW-
+Block 1 end
+
+Block 2 begin
+Zone: 0x122433 - 0x122443
+Miniblock 1:		0x122433		-		0x122443		| RW-
+Block 2 end
+
+Block 3 begin
+Zone: 0x1B6F96 - 0x1B6FD6
+Miniblock 1:		0x1B6F96		-		0x1B6FD6		| RW-
+Block 3 end
+
+Block 4 begin
+Zone: 0x1BF3F8 - 0x1BF418
+Miniblock 1:		0x1BF3F8		-	

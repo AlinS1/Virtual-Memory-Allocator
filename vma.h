@@ -42,6 +42,7 @@ typedef struct {
 arena_t *alloc_arena(const uint64_t size);
 void dealloc_arena(arena_t *arena);
 
+void concat_block(block_t *old_block, block_t *new_block, int idx);
 void alloc_block(arena_t *arena, const uint64_t address, const uint64_t size);
 void free_block(arena_t *arena, const uint64_t address);
 
@@ -50,6 +51,10 @@ void write(arena_t *arena, const uint64_t address, const uint64_t size,
 		   int8_t *data);
 void pmap(const arena_t *arena);
 void mprotect(arena_t *arena, uint64_t address, int8_t *permission);
+
+int transform_permission(char *data);
+int find_permission(int8_t *permission);
+block_t *find_block(arena_t *arena, const uint64_t address);
 
 // ---------- list functions -----------
 list_t *ll_create(unsigned int data_size);
