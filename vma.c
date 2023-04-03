@@ -460,8 +460,8 @@ void write(arena_t *arena, const uint64_t address, const uint64_t size,
 		// gasire miniblock
 		miniblock_t *minib_curr =
 			(miniblock_t *)minib_curr_node->data;  // minib
-
-		if (minib_curr->start_address == address) {
+		uint64_t end_mb_curr = minib_curr->start_address + minib_curr->size - 1;
+		if (minib_curr->start_address <= address && address <= end_mb_curr) {
 			// gasit miniblock
 
 			if (!check_permission(minib_list, minib_curr_node, size, j, 2)) {
@@ -474,7 +474,7 @@ void write(arena_t *arena, const uint64_t address, const uint64_t size,
 					"Warning: size was bigger than the block "
 					"size.");
 				printf(" Writing %ld characters.\n",
-					   end_block_curr - minib_curr->start_address + 1);
+					   end_block_curr - address + 1);
 			}
 
 			unsigned int idx_data = 0;
