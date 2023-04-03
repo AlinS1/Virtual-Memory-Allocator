@@ -60,7 +60,7 @@ int check_parameters(int type, int nr_param)
 	if (type == 7 && nr_param != 1)	 // PMAP
 		ok = 0;
 
-	if (type == 8 && nr_param != 3)	 // MPROTECT
+	if (type == 8 && nr_param < 3)	// MPROTECT
 		ok = 0;
 
 	if (ok == 0)
@@ -80,7 +80,10 @@ int main(void)
 	char *param;
 	uint64_t size, address;
 
-	while (fgets(line, NMAX_LINE, stdin)) {
+	while (1) {
+		fgets(line, NMAX_LINE, stdin);
+		if (line[0] == '\n')
+			continue;
 		strcpy(line_copy, line);
 		int nr_param = n_parameters(line_copy, delim);
 
@@ -144,7 +147,7 @@ int main(void)
 					address = atol(param);
 					param = strtok(NULL, "\n");
 					int8_t *permission = (int8_t *)param;
-					mprotect(arena,address,permission);
+					mprotect(arena, address, permission);
 					break;
 			}
 	}

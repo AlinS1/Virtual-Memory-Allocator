@@ -1,8 +1,1 @@
-Perm:2
-gigel
-Invalid command. Please try again.
-Invalid command. Please try again.
-Invalid command. Please try again.
-Invalid command. Please try again.
-Invalid command. Please try again.
-gigel
+gcc -g -o vma main.c vma.c -Wall -Wextra -std=c99 -I.

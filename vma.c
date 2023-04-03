@@ -208,7 +208,6 @@ void alloc_block(arena_t *arena, const uint64_t address, const uint64_t size)
 	free(new_block);
 }
 
-
 void free_block(arena_t *arena, const uint64_t address)
 {
 	if (!arena ||
@@ -360,6 +359,11 @@ void read(arena_t *arena, uint64_t address, uint64_t size)
 			address <= end_minib) {	 // add poate fi in mijlocul unui mb
 			// gasit miniblock
 
+			if (!check_permission(minib_list, minib_curr_node, size, j, 4)) {
+				printf("Invalid permissions for read.\n");
+				return;
+			}
+
 			if (end_block_curr - address + 1 < size) {
 				printf("Warning: size was bigger than the block size.");
 				printf(" Reading %ld characters.\n",
@@ -418,10 +422,14 @@ void write(arena_t *arena, const uint64_t address, const uint64_t size,
 		data_string[0] = '\n';
 	}
 
-	if (data)
+	if (data) {
 		for (unsigned int i = 0; i < strlen((char *)data); i++) {
 			data_string[i] = (char)data[i];
 		}
+		if (strlen(data_string) == size - 1)
+			// because strtok doesn't get the last enter
+			data_string[strlen(data_string)] = '\n';
+	}
 
 	if (strlen(data_string) < size) {
 		if (data_string[0] != '\n')
@@ -455,6 +463,11 @@ void write(arena_t *arena, const uint64_t address, const uint64_t size,
 
 		if (minib_curr->start_address == address) {
 			// gasit miniblock
+
+			if (!check_permission(minib_list, minib_curr_node, size, j, 2)) {
+				printf("Invalid permissions for write.\n");
+				return;
+			}
 
 			if (end_block_curr - minib_curr->start_address + 1 < size) {
 				printf(
@@ -546,11 +559,13 @@ void pmap(const arena_t *arena)
 		for (unsigned int j = 0; j < miniblock_list->total_elements; j++) {
 			miniblock_t *curr_miniblock = (miniblock_t *)curr_node_minib->data;
 
-			printf("Miniblock %d:\t\t0x%lX\t\t-\t\t0x%lX\t\t| RW-\n", j + 1,
+			printf("Miniblock %d:\t\t0x%lX\t\t-\t\t0x%lX\t\t| ", j + 1,
 				   curr_miniblock->start_address,
 				   curr_miniblock->start_address + curr_miniblock->size);
 
 			// RW- din octal TODO
+			print_permissions(curr_miniblock->perm);
+
 			curr_node_minib = curr_node_minib->next;
 		}
 
@@ -562,7 +577,7 @@ void pmap(const arena_t *arena)
 void mprotect(arena_t *arena, uint64_t address, int8_t *permission)
 {
 	int8_t perm = find_permission(permission);
-
+	// printf("p1:%d\n", perm);
 	block_t *curr_block = find_block(arena, address);
 	if (!curr_block) {
 		printf("Invalid address for mprotect.\n");
@@ -574,16 +589,18 @@ void mprotect(arena_t *arena, uint64_t address, int8_t *permission)
 
 	for (unsigned int j = 0; j < minib_list->total_elements; j++) {
 		// gasire miniblock
-		miniblock_t *minib_curr =
-			(miniblock_t *)minib_curr_node->data;  // minib
-		uint64_t end_minib = minib_curr->size + minib_curr->size - 1;
-		if (minib_curr->start_address <= address && address <= end_minib) {
-			// address poate fi in mijlocul unui mb
+		miniblock_t *minib_curr = (miniblock_t *)minib_curr_node->data;
+		// minib
 
+		if (minib_curr->start_address == address) {
 			minib_curr->perm = perm;
-			printf("Perm:%d\n", minib_curr->perm);
+			return;
+			// printf("Perm:%d\n", minib_curr->perm);
 		}
+		minib_curr_node = minib_curr_node->next;
 	}
+
+	printf("Invalid address for mprotect.\n");
 }
 
 int transform_permission(char *data)
@@ -628,14 +645,57 @@ block_t *find_block(arena_t *arena, const uint64_t address)
 			// gasit block
 			return curr_block;
 		}
+		curr = curr->next;
 	}
 	return NULL;
+}
+
+// mode = 4 -> READ; mode = 2 -> WRITE
+int check_permission(list_t *minib_list, node_t *minib_node, uint64_t size,
+					 int j, int mode)
+{
+	uint64_t mask = mode;
+
+	node_t *minib_curr_node = minib_node;
+	miniblock_t *minib_curr = (miniblock_t *)minib_curr_node->data;
+	unsigned int idx_data = 0;
+
+	for (unsigned int l = j; l < minib_list->total_elements && idx_data < size;
+		 l++) {
+		idx_data += minib_curr->size;
+		// printf("perm:%d\n", minib_curr->perm);
+		if ((minib_curr->perm & mask) == 0)
+			return 0;  // nu are perm peste tot
+
+		if (l == minib_list->total_elements - 1)
+			break;
+		minib_curr_node = minib_curr_node->next;
+		minib_curr = (miniblock_t *)minib_curr_node->data;
+	}
+
+	return 1;  // ok
+}
+
+void print_permissions(uint8_t permissions)
+{
+	if ((permissions & 4) != 0)
+		printf("R");
+	else
+		printf("-");
+	if ((permissions & 2) != 0)
+		printf("W");
+	else
+		printf("-");
+	if ((permissions & 1) != 0)
+		printf("X");
+	else
+		printf("-");
+	printf("\n");
 }
 
 // ===========
 // LINKED-LIST
 // ===========
-
 
 list_t *ll_create(unsigned int data_size)
 {
