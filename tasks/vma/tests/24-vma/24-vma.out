@@ -1,1 +1,2 @@
-gcc -g -o vma main.c vma.c -Wall -Wextra -std=c99 -I.
+Warning: size was bigger than the block size. Writing 2 characters.
+GI

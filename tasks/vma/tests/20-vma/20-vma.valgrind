@@ -1,0 +1,15 @@
+==1729== Memcheck, a memory error detector
+==1729== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==1729== Using Valgrind-3.15.0 and LibVEX; rerun with -h for copyright info
+==1729== Command: /mnt/c/Users/alins/OneDrive/Desktop/SDA_tema1/vma
+==1729== Parent PID: 1728
+==1729== 
+==1729== 
+==1729== HEAP SUMMARY:
+==1729==     in use at exit: 0 bytes in 0 blocks
+==1729==   total heap usage: 11 allocs, 11 frees, 1,232 bytes allocated
+==1729== 
+==1729== All heap blocks were freed -- no leaks are possible
+==1729== 
+==1729== For lists of detected and suppressed errors, rerun with: -s
+==1729== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

@@ -3,10 +3,25 @@
 arena_t *alloc_arena(const uint64_t size)
 {
 	arena_t *arena = (arena_t *)malloc(sizeof(arena_t));
+	DIE(!arena, "malloc failed");
 	arena->arena_size = size;
 	arena->alloc_list = ll_create(sizeof(block_t));
 
 	return arena;
+}
+
+void free_buffers(list_t *minib_list)
+{
+	node_t *curr_minib_node = minib_list->head;
+	for (unsigned int i = 0; i < minib_list->total_elements; i++) {
+		miniblock_t *curr_minib = (miniblock_t *)curr_minib_node->data;
+		if (curr_minib->rw_buffer) {
+			free(curr_minib->rw_buffer);
+			curr_minib->rw_buffer = NULL;
+		}
+		if (curr_minib_node->next)
+			curr_minib_node = curr_minib_node->next;
+	}
 }
 
 void dealloc_arena(arena_t *arena)
@@ -16,12 +31,9 @@ void dealloc_arena(arena_t *arena)
 		block_t *curr_block = (block_t *)curr->data;
 		list_t *curr_mb_list = (list_t *)curr_block->miniblock_list;
 		// pt fiecare minib - free(rw->buffer)
+		free_buffers(curr_mb_list);
 		ll_free(&curr_mb_list);
-		ll_remove_nth_node(arena->alloc_list, 0);
-		free(curr->data);
-		curr->data = NULL;
-		free(curr);
-		curr = NULL;
+		free_node(arena->alloc_list, 0);
 	}
 	free(arena->alloc_list);
 	arena->alloc_list = NULL;
@@ -43,13 +55,7 @@ void concat_block(block_t *old_block, block_t *new_block, int idx)
 							old_miniblock_list->total_elements,
 							curr_minib->data);
 
-			node_t *removed_node = ll_remove_nth_node(new_miniblock_list, 0);
-			if (removed_node->data) {
-				free(removed_node->data);
-				removed_node->data = NULL;
-			}
-			free(removed_node);
-			removed_node = NULL;
+			free_node(new_miniblock_list, 0);
 		}
 	}
 
@@ -63,53 +69,86 @@ void concat_block(block_t *old_block, block_t *new_block, int idx)
 				 i++)
 				minib_current = minib_current->next;
 			ll_add_nth_node(old_miniblock_list, 0, minib_current->data);
-			node_t *removed_node = ll_remove_nth_node(
-				new_miniblock_list, new_miniblock_list->total_elements);
-			if (removed_node->data) {
-				free(removed_node->data);
-				removed_node->data = NULL;
-			}
-			free(removed_node);
-			removed_node = NULL;
+			free_node(new_miniblock_list, new_miniblock_list->total_elements);
 		}
 	}
 	// free de block vechi
 	ll_free((list_t **)&new_block->miniblock_list);
 }
 
-void alloc_block(arena_t *arena, const uint64_t address, const uint64_t size)
+int alloc_block_errors(arena_t *arena, uint64_t address, uint64_t end_addr_new)
 {
 	if (!arena) {
 		printf("Arena was not allocated.\n");
-		return;
+		return 0;
 	}
-	uint64_t end_address_new = address + size - 1;
-
 	if (address + 1 > arena->arena_size) {
 		printf("The allocated address is outside the size of arena\n");
-		return;
+		return 0;
 	}
-	if (end_address_new + 1 > arena->arena_size) {
+	if (end_addr_new + 1 > arena->arena_size) {
 		printf("The end address is past the size of the arena\n");
-		return;
+		return 0;
 	}
+	return 1;
+}
 
-	// New block creation
+void cases_of_alloc_block(arena_t *arena, int k, block_t *prev_b,
+						  uint64_t prev_end, block_t *next_b,
+						  uint64_t next_start, block_t *new_block,
+						  uint64_t end_address_new)
+{
+	if ((prev_end == new_block->start_address - 1) &&
+		(end_address_new == next_start - 1)) {
+		// Connect to the previous block, then the sum to the next.
+		concat_block(prev_b, new_block, -1);  //(OLD, NEW)
+		concat_block(prev_b, next_b, -1);
+		free_node(arena->alloc_list, k);  // free block 3;
+	} else {
+		if (prev_end == new_block->start_address - 1) {
+			// Connect to the old(previous) block. (OLD, NEW)
+			concat_block(prev_b, new_block, -1);
+		} else {
+			if (end_address_new == next_start - 1) {
+				// Connect to the old(next) block. (NEW, OLD)
+				concat_block(next_b, new_block, 1);
+			} else {
+				ll_add_nth_node(arena->alloc_list, k, new_block);
+			}
+		}
+	}
+}
+
+block_t *init_new_block(uint64_t address, uint64_t size)
+{
 	block_t *new_block = malloc(sizeof(block_t));
+	DIE(!new_block, "malloc failed");
 	new_block->size = size;
 	new_block->start_address = address;
-	// void* = list_t* ???
 	new_block->miniblock_list = ll_create(sizeof(miniblock_t));
 
 	// list of miniblocks
 	miniblock_t *miniblock_l = malloc(sizeof(miniblock_t));
+	DIE(!miniblock_l, "malloc failed");
 	miniblock_l->size = size;
 	miniblock_l->start_address = address;
-	miniblock_l->perm = 6;	// RW- ???
+	miniblock_l->perm = 6;	// default RW-
 	miniblock_l->rw_buffer = NULL;
-	ll_add_nth_node(new_block->miniblock_list, 0,
-					miniblock_l);  // free old_data ???
-	free(miniblock_l);			   //???
+	ll_add_nth_node(new_block->miniblock_list, 0, miniblock_l);
+	// free old_data ???
+	free(miniblock_l);
+	return new_block;
+}
+
+void alloc_block(arena_t *arena, const uint64_t address, const uint64_t size)
+{
+	uint64_t end_address_new = address + size - 1;
+
+	if (!alloc_block_errors(arena, address, end_address_new))
+		return;
+
+	// New block creation
+	block_t *new_block = init_new_block(address, size);
 
 	// Add to the arena
 	if (arena->alloc_list->total_elements == 0) {
@@ -155,8 +194,7 @@ void alloc_block(arena_t *arena, const uint64_t address, const uint64_t size)
 		node_t *next_n = first->next;
 		int k = 1;
 
-		// The new block is somewhere between two blocks
-		do {
+		do {  // The new block is somewhere between two blocks
 			block_t *prev_b = (block_t *)previous->data;
 			uint64_t prev_end = prev_b->start_address + prev_b->size - 1;
 			block_t *next_b = (block_t *)next_n->data;
@@ -164,36 +202,8 @@ void alloc_block(arena_t *arena, const uint64_t address, const uint64_t size)
 
 			if (prev_end < new_block->start_address &&
 				end_address_new < next_start) {
-				if ((prev_end == new_block->start_address - 1) &&
-					(end_address_new == next_start - 1)) {
-					// Connect to the old(previous & next) blocks. TODO
-					concat_block(prev_b, new_block, -1);  //(OLD, NEW)
-					concat_block(prev_b, next_b, -1);
-					// dealocam block-ul 3;
-					node_t *removed_node =
-						ll_remove_nth_node(arena->alloc_list, k);
-					if (removed_node->data) {
-						free(removed_node->data);
-						removed_node->data = NULL;
-					}
-					free(removed_node);
-					removed_node = NULL;
-
-					//  connect the existing created one(prev+new) with the
-					//  existing next
-				} else {
-					if (prev_end == new_block->start_address - 1) {
-						// Connect to the old(previous) block. (OLD, NEW)
-						concat_block(prev_b, new_block, -1);
-					} else {
-						if (end_address_new == next_start - 1) {
-							// Connect to the old(next) block. (NEW, OLD)
-							concat_block(next_b, new_block, 1);
-						} else {
-							ll_add_nth_node(arena->alloc_list, k, new_block);
-						}
-					}
-				}
+				cases_of_alloc_block(arena, k, prev_b, prev_end, next_b,
+									 next_start, new_block, end_address_new);
 				free(new_block);
 				return;
 			}
@@ -204,14 +214,14 @@ void alloc_block(arena_t *arena, const uint64_t address, const uint64_t size)
 	}
 	// Reach error only if a free zone is not found.
 	printf("This zone was already allocated.\n");
-	ll_free(new_block->miniblock_list);
+	ll_free((list_t **)&new_block->miniblock_list);
 	free(new_block);
 }
 
 void free_block(arena_t *arena, const uint64_t address)
 {
-	if (!arena ||
-		arena->alloc_list->total_elements == 0) {  // Nu avem ce sa freeuim
+	if (!arena || arena->alloc_list->total_elements == 0) {
+		// Nu avem ce sa freeuim
 		printf("Invalid address for free.\n");
 		return;
 	}
@@ -225,42 +235,23 @@ void free_block(arena_t *arena, const uint64_t address)
 			list_t *minib_list = (list_t *)curr_block->miniblock_list;
 			node_t *minib_curr_node = minib_list->head;
 
-			for (unsigned int j = 0; j < minib_list->total_elements;
-				 j++) {	 // gasire miniblock
+			for (unsigned int j = 0; j < minib_list->total_elements; j++) {
+				// gasire miniblock
 				miniblock_t *minib_curr = (miniblock_t *)minib_curr_node->data;
 
 				if (minib_curr->start_address == address) {	 // gasit
-					// printf("MB gasit:%lX %lX\n", minib_curr->start_address,
-					//	   minib_curr->size);
 					if (minib_list->total_elements == 1) {
-						// list de mini are un sg elem
-						// dealloc tot block ul ca are doar un element
+						// dealloc tot block ul ca list de mini are doar un elem
 						ll_free(&minib_list);
-						ll_remove_nth_node(arena->alloc_list, i);
-						free(curr->data);
-						curr->data = NULL;
-						free(curr);
-						curr = NULL;
+						free_node(arena->alloc_list, i);
 						return;
 					}
-
-					// inceput sau end of block;
-
 					if (j == 0 || j == minib_list->total_elements - 1) {
+						// inceput sau end of block
 						if (j == 0)
 							curr_block->start_address += minib_curr->size;
-
 						curr_block->size -= minib_curr->size;
-
-						node_t *removed_node =
-							ll_remove_nth_node(minib_list, j);
-						if (removed_node->data) {
-							free(removed_node->data);
-							removed_node->data = NULL;
-						}
-						free(removed_node);
-						removed_node = NULL;
-
+						free_node(minib_list, j);
 						return;
 					}
 
@@ -271,16 +262,11 @@ void free_block(arena_t *arena, const uint64_t address)
 
 					// free miniblock to be freed
 					curr_block->size -= minib_curr->size;
-					node_t *removed_node = ll_remove_nth_node(minib_list, j);
-					if (removed_node->data) {
-						free(removed_node->data);
-						removed_node->data = NULL;
-					}
-					free(removed_node);
-					removed_node = NULL;
+					free_node(minib_list, j);
 
 					// create new block
 					block_t *new_block = malloc(sizeof(block_t));
+					DIE(!new_block, "malloc failed");
 					new_block->size = 0;
 
 					// first miniblock
@@ -299,36 +285,25 @@ void free_block(arena_t *arena, const uint64_t address)
 										minib_curr_node->data);
 						new_minib = (miniblock_t *)minib_curr_node->data;
 						new_block->size += new_minib->size;
-						// printf("Telems:%d\n", minib_list->total_elements);
-						removed_node = ll_remove_nth_node(minib_list, j);
-						if (removed_node->data) {
-							free(removed_node->data);
-							removed_node->data = NULL;
-						}
-						free(removed_node);
-						removed_node = NULL;
+						free_node(minib_list, j);
 
 						if (minib_list->total_elements - j == 0)
 							break;
-
 						minib_curr_node = next;
 						if (next->next)
 							next = next->next;
 					}
 
 					curr_block->size -= new_block->size;
-
 					ll_add_nth_node(arena->alloc_list, i + 1, new_block);
-
+					free(new_block);
 					return;
 				}
-
 				minib_curr_node = minib_curr_node->next;
 			}
 		}
 		curr = curr->next;
 	}
-
 	printf("Invalid address for free.\n");
 }
 
@@ -416,16 +391,14 @@ void write(arena_t *arena, const uint64_t address, const uint64_t size,
 		   int8_t *data)
 {
 	char *data_string = malloc(sizeof(char) * size);
-	// printf("--%s--\n",(char*)data);
-
-	if (!data) {
+	DIE(!data_string, "malloc failed");
+	if (!data)
 		data_string[0] = '\n';
-	}
 
 	if (data) {
-		for (unsigned int i = 0; i < strlen((char *)data); i++) {
+		for (unsigned int i = 0; i < strlen((char *)data); i++)
 			data_string[i] = (char)data[i];
-		}
+
 		if (strlen(data_string) == size - 1)
 			// because strtok doesn't get the last enter
 			data_string[strlen(data_string)] = '\n';
@@ -434,9 +407,9 @@ void write(arena_t *arena, const uint64_t address, const uint64_t size,
 	if (strlen(data_string) < size) {
 		if (data_string[0] != '\n')
 			data_string[strlen(data_string)] = '\n';
-		while (strlen(data_string) < size) {
+		while (strlen(data_string) < size)
 			fscanf(stdin, "%c", &data_string[strlen(data_string)]);
-		}  //??? Acum sau mai incolo???
+		//??? Acum sau mai incolo???
 		char last_enter;
 		fscanf(stdin, "%c", &last_enter);
 	}
@@ -458,21 +431,16 @@ void write(arena_t *arena, const uint64_t address, const uint64_t size,
 
 	for (unsigned int j = 0; j < minib_list->total_elements; j++) {
 		// gasire miniblock
-		miniblock_t *minib_curr =
-			(miniblock_t *)minib_curr_node->data;  // minib
+		miniblock_t *minib_curr = (miniblock_t *)minib_curr_node->data;
 		uint64_t end_mb_curr = minib_curr->start_address + minib_curr->size - 1;
 		if (minib_curr->start_address <= address && address <= end_mb_curr) {
-			// gasit miniblock
-
 			if (!check_permission(minib_list, minib_curr_node, size, j, 2)) {
 				printf("Invalid permissions for write.\n");
 				return;
 			}
 
 			if (end_block_curr - minib_curr->start_address + 1 < size) {
-				printf(
-					"Warning: size was bigger than the block "
-					"size.");
+				printf("Warning: size was bigger than the block size.");
 				printf(" Writing %ld characters.\n",
 					   end_block_curr - address + 1);
 			}
@@ -482,11 +450,10 @@ void write(arena_t *arena, const uint64_t address, const uint64_t size,
 			for (unsigned int l = j; l < minib_list->total_elements; l++) {
 				unsigned int idx_minib = 0;
 				minib_curr->rw_buffer = malloc(minib_curr->size * sizeof(char));
+				DIE(!minib_curr->rw_buffer, "malloc failed");
 
 				while (idx_minib < minib_curr->size &&
 					   idx_data < strlen(data_string)) {
-					// printf("TEST:%s\n", data_string + idx_data);
-
 					if (strlen(data_string) - idx_data < minib_curr->size) {
 						memcpy(minib_curr->rw_buffer, data_string + idx_data,
 							   strlen(data_string) - idx_data);
@@ -499,30 +466,24 @@ void write(arena_t *arena, const uint64_t address, const uint64_t size,
 						idx_minib += minib_curr->size;
 					}
 				}
-
 				if (l == minib_list->total_elements - 1)
 					break;
 				minib_curr_node = minib_curr_node->next;
 				minib_curr = (miniblock_t *)minib_curr_node->data;
-				// TODO buffer init pe NULL;
 			}
-
+			free(data_string);
 			return;
 		}
 	}
-
+	free(data_string);
 	printf("Invalid address for write.\n");
 }
 
 void pmap(const arena_t *arena)
 {
-	// Total memory: 0x10000 bytes
-	// Free memory: 0xFFE2 bytes
-	// Number of allocated blocks: 3
-	// Number of allocated miniblocks: 3
-	if (!arena) {
+	if (!arena)
 		return;
-	}
+
 	printf("Total memory: 0x%lX bytes\n", arena->arena_size);
 
 	uint64_t free_memory = arena->arena_size;
@@ -543,9 +504,6 @@ void pmap(const arena_t *arena)
 		   arena->alloc_list->total_elements);
 	printf("Number of allocated miniblocks: %ld\n", nr_miniblocks);
 
-	// Block 1 begin
-	// Zone: 0x1000 - 0x100A
-	// Block 1 end
 	curr_node_b = arena->alloc_list->head;
 	for (unsigned int i = 0; i < arena->alloc_list->total_elements; i++) {
 		block_t *curr_block = (block_t *)curr_node_b->data;
@@ -554,7 +512,6 @@ void pmap(const arena_t *arena)
 		printf("Zone: 0x%lX - 0x%lX\n", curr_block->start_address,
 			   curr_block->start_address + curr_block->size);
 
-		// Miniblock 1:        0x1000      -       0x100A      | RW-
 		node_t *curr_node_minib = miniblock_list->head;
 		for (unsigned int j = 0; j < miniblock_list->total_elements; j++) {
 			miniblock_t *curr_miniblock = (miniblock_t *)curr_node_minib->data;
@@ -563,7 +520,6 @@ void pmap(const arena_t *arena)
 				   curr_miniblock->start_address,
 				   curr_miniblock->start_address + curr_miniblock->size);
 
-			// RW- din octal TODO
 			print_permissions(curr_miniblock->perm);
 
 			curr_node_minib = curr_node_minib->next;
@@ -577,7 +533,6 @@ void pmap(const arena_t *arena)
 void mprotect(arena_t *arena, uint64_t address, int8_t *permission)
 {
 	int8_t perm = find_permission(permission);
-	// printf("p1:%d\n", perm);
 	block_t *curr_block = find_block(arena, address);
 	if (!curr_block) {
 		printf("Invalid address for mprotect.\n");
@@ -620,7 +575,7 @@ int find_permission(int8_t *permission)
 {
 	int final_permission = 0;
 	char *data = (char *)permission;
-	char delim[] = "| \n";
+	char delim[] = "|\n ";
 	char *perm = strtok(data, delim);
 	while (perm) {
 		int type = transform_permission(perm);
@@ -702,6 +657,7 @@ list_t *ll_create(unsigned int data_size)
 	list_t *ll;
 
 	ll = malloc(sizeof(*ll));
+	DIE(!ll, "malloc failed");
 
 	ll->head = NULL;
 	ll->data_size = data_size;
@@ -715,15 +671,13 @@ void ll_add_nth_node(list_t *list, unsigned int n, const void *new_data)
 	node_t *prev, *curr;
 	node_t *new_node;
 
-	if (!list) {
+	if (!list)
 		return;
-	}
 
 	/* n >= list->size inseamna adaugarea unui nou nod la finalul
 	 * listei. */
-	if (n > list->total_elements) {
+	if (n > list->total_elements)
 		n = list->total_elements;
-	}
 
 	curr = list->head;
 	prev = NULL;
@@ -734,16 +688,16 @@ void ll_add_nth_node(list_t *list, unsigned int n, const void *new_data)
 	}
 
 	new_node = malloc(sizeof(*new_node));
+	DIE(!new_node, "malloc failed");
 	new_node->data = malloc(list->data_size);
+	DIE(!new_node->data, "malloc failed");
 	memcpy(new_node->data, new_data, list->data_size);
 
 	new_node->next = curr;
-	if (prev == NULL) {
-		/* Adica n == 0. */
+	if (!prev) /* Adica n == 0. */
 		list->head = new_node;
-	} else {
+	else
 		prev->next = new_node;
-	}
 
 	list->total_elements++;
 }
@@ -752,16 +706,14 @@ node_t *ll_remove_nth_node(list_t *list, unsigned int n)
 {
 	node_t *prev, *curr;
 
-	if (!list || !list->head) {
+	if (!list || !list->head)
 		return NULL;
-	}
 
 	/* n >= list->size - 1 inseamna eliminarea nodului de la finalul
 	 * listei.
 	 */
-	if (n > list->total_elements - 1) {
+	if (n > list->total_elements - 1)
 		n = list->total_elements - 1;
-	}
 
 	curr = list->head;
 	prev = NULL;
@@ -771,12 +723,10 @@ node_t *ll_remove_nth_node(list_t *list, unsigned int n)
 		--n;
 	}
 
-	if (prev == NULL) {
-		/* Adica n == 0. */
+	if (!prev) /* Adica n == 0. */
 		list->head = curr->next;
-	} else {
+	else
 		prev->next = curr->next;
-	}
 
 	list->total_elements--;
 
@@ -785,29 +735,103 @@ node_t *ll_remove_nth_node(list_t *list, unsigned int n)
 
 unsigned int ll_get_size(list_t *list)
 {
-	if (!list) {
+	if (!list)
 		return 0;
-	}
 
 	return list->total_elements;
 }
 
 void ll_free(list_t **pp_list)
 {
-	node_t *currNode;
-
-	if (!pp_list || !*pp_list) {
+	if (!pp_list || !*pp_list)
 		return;
-	}
 
-	while (ll_get_size(*pp_list) > 0) {
-		currNode = ll_remove_nth_node(*pp_list, 0);
-		free(currNode->data);
-		currNode->data = NULL;
-		free(currNode);
-		currNode = NULL;
-	}
+	while (ll_get_size(*pp_list) > 0)
+		free_node(*pp_list, 0);
 
 	free(*pp_list);
 	*pp_list = NULL;
+}
+
+void free_node(list_t *list, int idx)
+{
+	node_t *removed_node = ll_remove_nth_node(list, idx);
+	if (removed_node->data) {
+		free(removed_node->data);
+		removed_node->data = NULL;
+	}
+	free(removed_node);
+	removed_node = NULL;
+}
+
+// ===================
+// AUXILIARY FUNCTIONS
+// ===================
+
+int command_type(char *command)
+{
+	// Translate the commands into numbers so we will be able to use switch
+	// case.
+	if (strcmp(command, "ALLOC_ARENA") == 0)
+		return 1;
+	if (strcmp(command, "DEALLOC_ARENA") == 0)
+		return 2;
+	if (strcmp(command, "ALLOC_BLOCK") == 0)
+		return 3;
+	if (strcmp(command, "FREE_BLOCK") == 0)
+		return 4;
+	if (strcmp(command, "READ") == 0)
+		return 5;
+	if (strcmp(command, "WRITE") == 0)
+		return 6;
+	if (strcmp(command, "PMAP") == 0)
+		return 7;
+	if (strcmp(command, "MPROTECT") == 0)
+		return 8;
+	return 0;
+}
+
+int nr_of_parameters(char *line, char *delim)
+{
+	int nr = 0;
+	char *word = strtok(line, delim);
+
+	while (word) {
+		nr++;
+		word = strtok(NULL, delim);
+	}
+
+	return nr;
+}
+
+int check_parameters(int type, int nr_param)
+{
+	int ok = 1;
+	if (type == 0)
+		ok = 0;
+	if (type == 1 && nr_param != 2)	 // ALLOC_ARENA
+		ok = 0;
+	if (type == 2 && nr_param != 1)	 // DEALLOC_ARENA
+		ok = 0;
+	if (type == 3 && nr_param != 3)	 // ALLOC_BLOCK
+		ok = 0;
+	if (type == 4 && nr_param != 2)	 // FREE_BLOCK
+		ok = 0;
+
+	if (type == 5 && nr_param != 3)	 // READ
+		ok = 0;
+
+	if (type == 6 && nr_param < 3)	// WRITE
+		ok = 0;
+
+	if (type == 7 && nr_param != 1)	 // PMAP
+		ok = 0;
+
+	if (type == 8 && nr_param < 3)	// MPROTECT
+		ok = 0;
+
+	if (ok == 0)
+		for (int i = 0; i < nr_param; i++)
+			printf("Invalid command. Please try again.\n");
+	return ok;
 }
