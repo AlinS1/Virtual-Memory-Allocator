@@ -1,78 +1,15 @@
-==1741== Memcheck, a memory error detector
-==1741== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
-==1741== Using Valgrind-3.15.0 and LibVEX; rerun with -h for copyright info
-==1741== Command: /mnt/c/Users/alins/OneDrive/Desktop/SDA_tema1/vma
-==1741== Parent PID: 1740
-==1741== 
-==1741== Invalid read of size 1
-==1741==    at 0x483EF54: strlen (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==1741==    by 0x10A79B: write (vma.c:402)
-==1741==    by 0x109716: main (main.c:68)
-==1741==  Address 0x4a4a5b5 is 0 bytes after a block of size 5 alloc'd
-==1741==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==1741==    by 0x10A6E8: write (vma.c:393)
-==1741==    by 0x109716: main (main.c:68)
-==1741== 
-==1741== Invalid read of size 1
-==1741==    at 0x483EF54: strlen (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==1741==    by 0x10A7CD: write (vma.c:407)
-==1741==    by 0x109716: main (main.c:68)
-==1741==  Address 0x4a4a5b5 is 0 bytes after a block of size 5 alloc'd
-==1741==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==1741==    by 0x10A6E8: write (vma.c:393)
-==1741==    by 0x109716: main (main.c:68)
-==1741== 
-==1741== Invalid read of size 1
-==1741==    at 0x483EF54: strlen (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==1741==    by 0x10AB12: write (vma.c:456)
-==1741==    by 0x109716: main (main.c:68)
-==1741==  Address 0x4a4a5b5 is 0 bytes after a block of size 5 alloc'd
-==1741==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==1741==    by 0x10A6E8: write (vma.c:393)
-==1741==    by 0x109716: main (main.c:68)
-==1741== 
-==1741== Invalid read of size 1
-==1741==    at 0x483EF54: strlen (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==1741==    by 0x10AA4D: write (vma.c:457)
-==1741==    by 0x109716: main (main.c:68)
-==1741==  Address 0x4a4a5b5 is 0 bytes after a block of size 5 alloc'd
-==1741==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==1741==    by 0x10A6E8: write (vma.c:393)
-==1741==    by 0x109716: main (main.c:68)
-==1741== 
-==1741== Invalid read of size 1
-==1741==    at 0x483EF54: strlen (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==1741==    by 0x10AA6F: write (vma.c:459)
-==1741==    by 0x109716: main (main.c:68)
-==1741==  Address 0x4a4a5b5 is 0 bytes after a block of size 5 alloc'd
-==1741==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==1741==    by 0x10A6E8: write (vma.c:393)
-==1741==    by 0x109716: main (main.c:68)
-==1741== 
-==1741== Invalid read of size 1
-==1741==    at 0x483EF54: strlen (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==1741==    by 0x10AAA1: write (vma.c:460)
-==1741==    by 0x109716: main (main.c:68)
-==1741==  Address 0x4a4a5b5 is 0 bytes after a block of size 5 alloc'd
-==1741==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==1741==    by 0x10A6E8: write (vma.c:393)
-==1741==    by 0x109716: main (main.c:68)
-==1741== 
-==1741== Invalid read of size 1
-==1741==    at 0x483EF54: strlen (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==1741==    by 0x10AAB0: write (vma.c:461)
-==1741==    by 0x109716: main (main.c:68)
-==1741==  Address 0x4a4a5b5 is 0 bytes after a block of size 5 alloc'd
-==1741==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==1741==    by 0x10A6E8: write (vma.c:393)
-==1741==    by 0x109716: main (main.c:68)
-==1741== 
-==1741== 
-==1741== HEAP SUMMARY:
-==1741==     in use at exit: 0 bytes in 0 blocks
-==1741==   total heap usage: 13 allocs, 13 frees, 1,247 bytes allocated
-==1741== 
-==1741== All heap blocks were freed -- no leaks are possible
-==1741== 
-==1741== For lists of detected and suppressed errors, rerun with: -s
-==1741== ERROR SUMMARY: 8 errors from 7 contexts (suppressed: 0 from 0)
+==2913== Memcheck, a memory error detector
+==2913== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==2913== Using Valgrind-3.15.0 and LibVEX; rerun with -h for copyright info
+==2913== Command: /mnt/c/Users/alins/OneDrive/Desktop/SDA_tema1/vma
+==2913== Parent PID: 2912
+==2913== 
+==2913== 
+==2913== HEAP SUMMARY:
+==2913==     in use at exit: 0 bytes in 0 blocks
+==2913==   total heap usage: 13 allocs, 13 frees, 1,248 bytes allocated
+==2913== 
+==2913== All heap blocks were freed -- no leaks are possible
+==2913== 
+==2913== For lists of detected and suppressed errors, rerun with: -s
+==2913== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

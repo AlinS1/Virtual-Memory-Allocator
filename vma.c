@@ -387,37 +387,61 @@ void read(arena_t *arena, uint64_t address, uint64_t size)
 	printf("Invalid address for read.\n");
 }
 
-void write(arena_t *arena, const uint64_t address, const uint64_t size,
-		   int8_t *data)
+char *create_string(uint64_t size)
 {
-	char *data_string = malloc(sizeof(char) * size);
-	DIE(!data_string, "malloc failed");
-	if (!data)
-		data_string[0] = '\n';
+	// add '\0' la final
+	char *param = strtok(NULL, "\n");
+	int8_t *data = (int8_t *)param;
 
+	char *data_string = malloc(sizeof(char) * (size + 1));
+	DIE(!data_string, "malloc failed");
+	if (!data) {
+		data_string[0] = '\n';
+		data_string[1] = '\0';
+	}
 	if (data) {
 		for (unsigned int i = 0; i < strlen((char *)data); i++)
 			data_string[i] = (char)data[i];
 
-		if (strlen(data_string) == size - 1)
-			// because strtok doesn't get the last enter
-			data_string[strlen(data_string)] = '\n';
-	}
+		data_string[strlen((char *)data)] = '\0';
 
-	if (strlen(data_string) < size) {
-		if (data_string[0] != '\n')
-			data_string[strlen(data_string)] = '\n';
-		while (strlen(data_string) < size)
-			fscanf(stdin, "%c", &data_string[strlen(data_string)]);
+		int len = strlen(data_string);
+		if (len == size - 1)
+		// because strtok doesn't get the last enter
+		{
+			data_string[len] = '\n';
+			data_string[len + 1] = '\0';
+		}
+	}
+	int len = strlen(data_string);
+	if (len < size) {
+		if (data_string[0] != '\n') {
+			data_string[len] = '\n';
+			data_string[len + 1] = '\0';
+		}
+		len = strlen(data_string);
+		while (len < size) {
+			fscanf(stdin, "%c", &data_string[len]);
+			data_string[len + 1] = '\0';
+			len = strlen(data_string);
+		}
 		//??? Acum sau mai incolo???
 		char last_enter;
 		fscanf(stdin, "%c", &last_enter);
 	}
 
+	return data_string;
+}
+
+void write(arena_t *arena, const uint64_t address, const uint64_t size,
+		   int8_t *data)
+{
 	if (!arena || arena->alloc_list->total_elements == 0) {
 		printf("Invalid address for write.\n");
 		return;
 	}
+
+	char *data_string = (char *)data;
 
 	block_t *curr_block = find_block(arena, address);
 	if (!curr_block) {

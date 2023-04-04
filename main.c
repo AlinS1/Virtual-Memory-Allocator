@@ -63,8 +63,7 @@ int main(void)
 					address = atol(param);
 					param = strtok(NULL, delim);
 					size = atol(param);
-					param = strtok(NULL, "\n");
-					int8_t *data = (int8_t *)param;
+					int8_t *data = (int8_t *)create_string(size);
 					write(arena, address, size, data);
 					break;
 
