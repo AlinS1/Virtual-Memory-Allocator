@@ -226,83 +226,75 @@ void free_block(arena_t *arena, const uint64_t address)
 		return;
 	}
 
-	node_t *curr = arena->alloc_list->head;
-	for (unsigned int i = 0; i < arena->alloc_list->total_elements; i++) {
-		block_t *curr_block = (block_t *)curr->data;
-		uint64_t curr_ending = curr_block->start_address + curr_block->size - 1;
-		if (curr_block->start_address <= address && address <= curr_ending) {
-			// gasim in ce block e
-			list_t *minib_list = (list_t *)curr_block->miniblock_list;
-			node_t *minib_curr_node = minib_list->head;
+	unsigned int i;
+	block_t *curr_block = find_block(arena, address, &i);
+	if (!curr_block) {
+		printf("Invalid address for free.\n");
+		return;
+	}
 
-			for (unsigned int j = 0; j < minib_list->total_elements; j++) {
-				// gasire miniblock
-				miniblock_t *minib_curr = (miniblock_t *)minib_curr_node->data;
+	list_t *minib_list = (list_t *)curr_block->miniblock_list;
+	node_t *minib_curr_node = minib_list->head;
 
-				if (minib_curr->start_address == address) {	 // gasit
-					if (minib_list->total_elements == 1) {
-						// dealloc tot block ul ca list de mini are doar un elem
-						ll_free(&minib_list);
-						free_node(arena->alloc_list, i);
-						return;
-					}
-					if (j == 0 || j == minib_list->total_elements - 1) {
-						// inceput sau end of block
-						if (j == 0)
-							curr_block->start_address += minib_curr->size;
-						curr_block->size -= minib_curr->size;
-						free_node(minib_list, j);
-						return;
-					}
+	for (unsigned int j = 0; j < minib_list->total_elements; j++) {
+		// gasire miniblock
+		miniblock_t *minib_curr = (miniblock_t *)minib_curr_node->data;
 
-					// in mijloc;  nr miniblock = j, nr block = i
-
-					// not lose the next
-					minib_curr_node = minib_curr_node->next;
-
-					// free miniblock to be freed
-					curr_block->size -= minib_curr->size;
-					free_node(minib_list, j);
-
-					// create new block
-					block_t *new_block = malloc(sizeof(block_t));
-					DIE(!new_block, "malloc failed");
-					new_block->size = 0;
-
-					// first miniblock
-					miniblock_t *new_minib =
-						(miniblock_t *)minib_curr_node->data;
-					new_block->start_address = new_minib->start_address;
-
-					new_block->miniblock_list = ll_create(sizeof(miniblock_t));
-					list_t *new_minib_list =
-						(list_t *)new_block->miniblock_list;
-
-					node_t *next = minib_curr_node->next;
-					while (minib_list->total_elements - j) {
-						ll_add_nth_node(new_minib_list,
-										new_minib_list->total_elements,
-										minib_curr_node->data);
-						new_minib = (miniblock_t *)minib_curr_node->data;
-						new_block->size += new_minib->size;
-						free_node(minib_list, j);
-
-						if (minib_list->total_elements - j == 0)
-							break;
-						minib_curr_node = next;
-						if (next->next)
-							next = next->next;
-					}
-
-					curr_block->size -= new_block->size;
-					ll_add_nth_node(arena->alloc_list, i + 1, new_block);
-					free(new_block);
-					return;
-				}
-				minib_curr_node = minib_curr_node->next;
+		if (minib_curr->start_address == address) {	 // gasit
+			if (minib_list->total_elements == 1) {
+				// dealloc tot block ul ca list de mini are doar un elem
+				ll_free(&minib_list);
+				free_node(arena->alloc_list, i);
+				return;
 			}
+			if (j == 0 || j == minib_list->total_elements - 1) {
+				// inceput sau end of block
+				if (j == 0)
+					curr_block->start_address += minib_curr->size;
+				curr_block->size -= minib_curr->size;
+				free_node(minib_list, j);
+				return;
+			}
+
+			// in mijloc;  nr miniblock = j, nr block = i
+			minib_curr_node = minib_curr_node->next;  // not lose the next
+
+			curr_block->size -= minib_curr->size;
+			free_node(minib_list, j);  // free miniblock to be freed
+
+			// create new block
+			block_t *new_block = malloc(sizeof(block_t));
+			DIE(!new_block, "malloc failed");
+			new_block->size = 0;
+
+			// first miniblock
+			miniblock_t *new_minib = (miniblock_t *)minib_curr_node->data;
+			new_block->start_address = new_minib->start_address;
+
+			new_block->miniblock_list = ll_create(sizeof(miniblock_t));
+			list_t *new_minib_list = (list_t *)new_block->miniblock_list;
+
+			node_t *next = minib_curr_node->next;
+			while (minib_list->total_elements - j) {
+				ll_add_nth_node(new_minib_list, new_minib_list->total_elements,
+								minib_curr_node->data);
+				new_minib = (miniblock_t *)minib_curr_node->data;
+				new_block->size += new_minib->size;
+				free_node(minib_list, j);
+
+				if (minib_list->total_elements - j == 0)
+					break;
+				minib_curr_node = next;
+				if (next->next)
+					next = next->next;
+			}
+
+			curr_block->size -= new_block->size;
+			ll_add_nth_node(arena->alloc_list, i + 1, new_block);
+			free(new_block);
+			return;
 		}
-		curr = curr->next;
+		minib_curr_node = minib_curr_node->next;
 	}
 	printf("Invalid address for free.\n");
 }
@@ -314,7 +306,8 @@ void read(arena_t *arena, uint64_t address, uint64_t size)
 		return;
 	}
 
-	block_t *curr_block = find_block(arena, address);
+	unsigned int i;
+	block_t *curr_block = find_block(arena, address, &i);
 	if (!curr_block) {
 		printf("Invalid address for read.\n");
 		return;
@@ -405,7 +398,7 @@ char *create_string(uint64_t size)
 
 		data_string[strlen((char *)data)] = '\0';
 
-		int len = strlen(data_string);
+		unsigned int len = strlen(data_string);
 		if (len == size - 1)
 		// because strtok doesn't get the last enter
 		{
@@ -413,7 +406,7 @@ char *create_string(uint64_t size)
 			data_string[len + 1] = '\0';
 		}
 	}
-	int len = strlen(data_string);
+	unsigned int len = strlen(data_string);
 	if (len < size) {
 		if (data_string[0] != '\n') {
 			data_string[len] = '\n';
@@ -443,7 +436,8 @@ void write(arena_t *arena, const uint64_t address, const uint64_t size,
 
 	char *data_string = (char *)data;
 
-	block_t *curr_block = find_block(arena, address);
+	unsigned int i;
+	block_t *curr_block = find_block(arena, address, &i);
 	if (!curr_block) {
 		printf("Invalid address for write.\n");
 		return;
@@ -557,7 +551,8 @@ void pmap(const arena_t *arena)
 void mprotect(arena_t *arena, uint64_t address, int8_t *permission)
 {
 	int8_t perm = find_permission(permission);
-	block_t *curr_block = find_block(arena, address);
+	unsigned int i;
+	block_t *curr_block = find_block(arena, address, &i);
 	if (!curr_block) {
 		printf("Invalid address for mprotect.\n");
 		return;
@@ -614,7 +609,7 @@ int find_permission(int8_t *permission)
 	return final_permission;
 }
 
-block_t *find_block(arena_t *arena, const uint64_t address)
+block_t *find_block(arena_t *arena, const uint64_t address, unsigned int *idx)
 {
 	node_t *curr = arena->alloc_list->head;	 // nod de block
 	for (unsigned int i = 0; i < arena->alloc_list->total_elements; i++) {
@@ -622,6 +617,7 @@ block_t *find_block(arena_t *arena, const uint64_t address)
 		uint64_t curr_ending = curr_block->start_address + curr_block->size - 1;
 		if (curr_block->start_address <= address && address <= curr_ending) {
 			// gasit block
+			*idx = i;
 			return curr_block;
 		}
 		curr = curr->next;

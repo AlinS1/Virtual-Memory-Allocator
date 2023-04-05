@@ -62,7 +62,7 @@ void mprotect(arena_t *arena, uint64_t address, int8_t *permission);
 
 int transform_permission(char *data);
 int find_permission(int8_t *permission);
-block_t *find_block(arena_t *arena, const uint64_t address);
+block_t *find_block(arena_t *arena, const uint64_t address, unsigned int *idx);
 int check_permission(list_t *minib_list, node_t *minib_node, uint64_t size,
 					 int j, int mode);
 void print_permissions(uint8_t permissions);
