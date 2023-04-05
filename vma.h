@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "list.h"
 
 #define DIE(assertion, call_description)                       \
@@ -35,10 +36,17 @@ typedef struct {
 } arena_t;
 
 arena_t *alloc_arena(const uint64_t size);
+void free_buffers(list_t *minib_list);
 void dealloc_arena(arena_t *arena);
 
 void concat_block(block_t *old_block, block_t *new_block, int idx);
 int alloc_block_errors(arena_t *arena, uint64_t address, uint64_t end_addr_new);
+void cases_of_alloc_block(arena_t *arena, int k, block_t *prev_b,
+						  uint64_t prev_end, block_t *next_b,
+						  uint64_t next_start, block_t *new_block,
+						  uint64_t end_address_new);
+block_t *init_new_block(uint64_t address, uint64_t size);
+
 void alloc_block(arena_t *arena, const uint64_t address, const uint64_t size);
 void free_block(arena_t *arena, const uint64_t address);
 

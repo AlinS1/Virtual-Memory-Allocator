@@ -2,6 +2,7 @@
 
 #include "vma.h"
 
+// Creates the list.
 list_t *ll_create(unsigned int data_size)
 {
 	list_t *ll;
@@ -16,6 +17,7 @@ list_t *ll_create(unsigned int data_size)
 	return ll;
 }
 
+// Adds a new node with "new_data" to the position "n" in the list.
 void ll_add_nth_node(list_t *list, unsigned int n, const void *new_data)
 {
 	node_t *prev, *curr;
@@ -24,8 +26,6 @@ void ll_add_nth_node(list_t *list, unsigned int n, const void *new_data)
 	if (!list)
 		return;
 
-	/* n >= list->size inseamna adaugarea unui nou nod la finalul
-	 * listei. */
 	if (n > list->total_elements)
 		n = list->total_elements;
 
@@ -44,7 +44,7 @@ void ll_add_nth_node(list_t *list, unsigned int n, const void *new_data)
 	memcpy(new_node->data, new_data, list->data_size);
 
 	new_node->next = curr;
-	if (!prev) /* Adica n == 0. */
+	if (!prev) /* n == 0. */
 		list->head = new_node;
 	else
 		prev->next = new_node;
@@ -52,6 +52,7 @@ void ll_add_nth_node(list_t *list, unsigned int n, const void *new_data)
 	list->total_elements++;
 }
 
+// Removes the "n"th node from the list.
 node_t *ll_remove_nth_node(list_t *list, unsigned int n)
 {
 	node_t *prev, *curr;
@@ -59,9 +60,6 @@ node_t *ll_remove_nth_node(list_t *list, unsigned int n)
 	if (!list || !list->head)
 		return NULL;
 
-	/* n >= list->size - 1 inseamna eliminarea nodului de la finalul
-	 * listei.
-	 */
 	if (n > list->total_elements - 1)
 		n = list->total_elements - 1;
 
@@ -73,7 +71,7 @@ node_t *ll_remove_nth_node(list_t *list, unsigned int n)
 		--n;
 	}
 
-	if (!prev) /* Adica n == 0. */
+	if (!prev) /* n == 0. */
 		list->head = curr->next;
 	else
 		prev->next = curr->next;
@@ -83,6 +81,7 @@ node_t *ll_remove_nth_node(list_t *list, unsigned int n)
 	return curr;
 }
 
+// Returns the size of the given list.
 unsigned int ll_get_size(list_t *list)
 {
 	if (!list)
@@ -91,6 +90,7 @@ unsigned int ll_get_size(list_t *list)
 	return list->total_elements;
 }
 
+// Frees the memory of the given list.
 void ll_free(list_t **pp_list)
 {
 	if (!pp_list || !*pp_list)
@@ -103,6 +103,7 @@ void ll_free(list_t **pp_list)
 	*pp_list = NULL;
 }
 
+// Frees the memory of the "idx"th node from the given list.
 void free_node(list_t *list, int idx)
 {
 	node_t *removed_node = ll_remove_nth_node(list, idx);
