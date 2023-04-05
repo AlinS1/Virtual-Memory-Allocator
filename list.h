@@ -1,3 +1,8 @@
+#pragma once
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 typedef struct node_t {
 	struct node_t *prev;
 	struct node_t *next;

@@ -9,8 +9,8 @@ CFLAGS=-Wall -Wextra -std=c99 -I.
 
 all: build
 
-build: main.c vma.c vma.h
-	$(CC) -g -o vma main.c vma.c $(CFLAGS)
+build: main.c vma.c vma.h list.c list.h
+	$(CC) -g -o vma main.c vma.c list.c $(CFLAGS)
 
 run_vma: build
 	./vma

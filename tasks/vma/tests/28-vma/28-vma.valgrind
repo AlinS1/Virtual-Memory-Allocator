@@ -1,25 +1,15 @@
-==2172== Memcheck, a memory error detector
-==2172== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
-==2172== Using Valgrind-3.15.0 and LibVEX; rerun with -h for copyright info
-==2172== Command: /mnt/c/Users/alins/OneDrive/Desktop/SDA_tema1/vma
-==2172== Parent PID: 2171
-==2172== 
-==2172== 
-==2172== HEAP SUMMARY:
-==2172==     in use at exit: 5 bytes in 1 blocks
-==2172==   total heap usage: 12 allocs, 11 frees, 1,237 bytes allocated
-==2172== 
-==2172== 5 bytes in 1 blocks are still reachable in loss record 1 of 1
-==2172==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==2172==    by 0x10A6B9: create_string (vma.c:389)
-==2172==    by 0x1096DB: main (main.c:66)
-==2172== 
-==2172== LEAK SUMMARY:
-==2172==    definitely lost: 0 bytes in 0 blocks
-==2172==    indirectly lost: 0 bytes in 0 blocks
-==2172==      possibly lost: 0 bytes in 0 blocks
-==2172==    still reachable: 5 bytes in 1 blocks
-==2172==         suppressed: 0 bytes in 0 blocks
-==2172== 
-==2172== For lists of detected and suppressed errors, rerun with: -s
-==2172== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+==5656== Memcheck, a memory error detector
+==5656== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==5656== Using Valgrind-3.15.0 and LibVEX; rerun with -h for copyright info
+==5656== Command: /mnt/c/Users/alins/OneDrive/Desktop/SDA_tema1/vma
+==5656== Parent PID: 5655
+==5656== 
+==5656== 
+==5656== HEAP SUMMARY:
+==5656==     in use at exit: 0 bytes in 0 blocks
+==5656==   total heap usage: 12 allocs, 12 frees, 1,237 bytes allocated
+==5656== 
+==5656== All heap blocks were freed -- no leaks are possible
+==5656== 
+==5656== For lists of detected and suppressed errors, rerun with: -s
+==5656== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

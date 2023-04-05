@@ -1,4 +1,5 @@
 #include "vma.h"
+#include "list.h"
 #define NMAX_LINE 100
 
 int main(void)

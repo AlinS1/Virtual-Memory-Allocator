@@ -1015,6 +1015,7 @@ Block 20 begin
 Zone: 0x1D9F - 0x1F9F
 Miniblock 1:		0x1D9F		-		0x1F9F		| RW-
 Block 20 end
+Warning: size was bigger than the block size. Writing 17 characters.
 Invalid address for write.
 Invalid address for free.
 Total memory: 0x3C74 bytes
@@ -2212,6 +2213,7 @@ Block 26 end
 Invalid address for free.
 Invalid address for free.
 Invalid address for read.
+Warning: size was bigger than the block size. Writing 3 characters.
 Total memory: 0x3C74 bytes
 Free memory: 0x3184 bytes
 Number of allocated blocks: 26
@@ -12214,9 +12216,4 @@ Block 51 end
 Block 52 begin
 Zone: 0x1D9F - 0x1F9F
 Miniblock 1:		0x1D9F		-		0x1F9F		| RW-
-Block 52 end
-Invalid address for write.
-This zone was already allocated.
-Invalid address for write.
-Invalid address for free.
-This zone was
+Bl
