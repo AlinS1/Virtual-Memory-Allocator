@@ -1,0 +1,123 @@
+**Similea Alin-Andrei**
+**314CA**
+
+## Virtual Memory Allocator 1
+
+### Implementation Description:
+
+* In the main function, we are going to use a "while" loop that ends when the 
+"DEALLOC_ARENA" command is recognized.
+At every iteration of the loop, we read a whole line and then we separate it in
+words keeping in mind the necessary delimiters (mainly space, but could also be
+the end of line "\n").
+
+* We find the number of words on the current line("nr_of_parameters" function) in
+order to later verify if the current command has enough parameters
+("check_parameters" function) and, if it doesn't, print the "Invalid command"
+errors.
+
+* The first word from the line needs to be a "command" string which we will
+translate into an integer through the function "command_type". This will make
+things easier for us because we will be able to use "switch case".
+
+* If the "check_parameters" function verifies a valid command, we then determine
+the parameters needed for each command with "strtok" and do different operations
+depending on the command type:
+1. ALLOC_ARENA -> simply allocates memory and initializes the arena.
+
+2. DEALLOC_ARENA -> frees all the memory from the arena. Firstly, we iterate
+through the list of blocks. Then, we free the buffers from the miniblocks that
+correspond to the current block(through the "free_buffers" function) and then
+free the list of miniblocks("ll_free") and eventually free the current block
+node("free_node").
+Then, we free the memory of the arena's block list. We couldn't have simply
+used the "ll_free" function because the miniblocks and buffers had to be freed
+individually. Back in the main function, we free the memory of the arena.
+
+3. ALLOC_BLOCK -> creates a block and adds it to the arena. After handling the
+possible errors(through the "alloc_block_errors" function), we initialize the
+new block we want to add to the arena according to the given "address" and
+"size"(through "init_new_block").
+Then, for easier use, we create 4 cases in regards of where could the new block
+be positioned after addition to the arena:
+    1: there are no already existing elements in the arena, so we simply add
+    the block.
+    2: the block would be positioned before the already existing first block in
+    the arena, so the new block would become the new first block.
+    3: the block would be positioned after the already existing last block in
+    the arena, so the new block would become the new last block.
+    4: the block would be positioned between two already existing blocks.
+For each case, we verify if the block is adjacent to other blocks and, if
+affirmative, we concatenate it to these particular blocks and give up on
+creating another separate block.
+In the end, if no case requirement is being met, it means that the zone the
+block should be placed at is already allocated to another block.
+
+4. FREE_BLOCK -> frees a miniblock from the arena found at a given "address".
+We firstly find the block that contains the given address through the
+"find_block" function that also modifies the "i" value which will correspond
+to the index of the block from the list of blocks in the arena.
+Then, iterating through the miniblock list of the found block, we will find the
+miniblock that is found at the given "address".
+In regards to how we should free the certain miniblock, we create 3 cases:
+    1: the block has only one miniblock - the one we need to free - so we free
+    both the miniblock and block.
+    2: the miniblock is the first or last in a list of miniblocks, so its
+    elimination would not impact the current block.
+    3: the miniblock is somewhere in between two other miniblocks from the
+    list, so the elimination of that miniblock would create two separate
+    blocks. More explicitly, we keep the old block, but we move the nodes of
+    miniblocks after the miniblock we freed to another miniblock list. This new
+    list will correspond to a new block that is going to be allocated.
+    Also, we need to keep track of the old block's size.
+If no case is being met, that means the miniblock has not been found and so we
+print an error.
+
+5. READ -> prints a given number of characters starting from a certain
+"address", up to a certain "size".
+We firstly find the block that contains the given address through the
+"find_block" function. Then, iterating through that block's list of miniblocks,
+we find the miniblock where we need to start reading from. We check whether we
+have the permission to read from that miniblock throughout the next miniblocks
+until we reach the wanted "size("check_permission" - parameter 4 for READ).
+We keep track of how many chars have been read through "idx_total_read". The
+reading will end when "idx_total_read" is equal to the given "size" of chars we
+need to read or when the list of miniblocks ends.
+Because we could start reading from the middle of a miniblock, we handle the
+first miniblock separately by firstly reaching the wanted "address" and then
+printing the remaining characters.
+Then, for the next miniblocks, we simply print the characters from them until
+"idx_total_read" is equal to the given "size" of chars we need to read or when
+the list of miniblocks ends.
+
+6. WRITE -> writes a certain size of characters into a block starting from a
+certain address.
+We firstly create our data string through the "create_string" function. We use
+this function because the data could be on more than one line.
+Then, after we find the block and the miniblock from where we need to start
+writing, we check the permissions to write("check_permission" - parameter 2 for
+WRITE). We keep track of how many characters have been written from the data
+string through "idx_data" and for each miniblock we keep track of how many
+chars have been written in that certain miniblock through "idx_minib".
+Until there are no more characters left in the data string or there are no more
+miniblocks left in the list, we write in the current miniblock's buffer
+depending on whether the size of the miniblock is smaller than the size of the
+remaining characters from the data string or not.
+
+7. PMAP -> prints the details of the entire arena in regards of memory, blocks
+and miniblocks.
+We firstly need to go through the entire arena to determine the free memory and
+the number of miniblocks so we can print these details.
+Then, we print the details(memory zone) for each block and go through each
+one's list of miniblocks and print their details(memory zone and permissions
+through the "print_permissions" function that uses the bitwise AND to verify
+whether or not the miniblock has a certain permission).
+
+8. MPROTECT -> changes the permissions of a certain miniblock by giving its
+address.
+We firstly determine the final permission number that the miniblock will have.
+We do this through the "find_permission" function and "transform_permission"
+function which translates the permissions' string into numbers in base 8
+(ex.: "PROT_READ" - 4). Then, after we find the block and the miniblock found
+at the given address, we change its permissions.
+If no miniblock was found, it means that the given address was invalid.

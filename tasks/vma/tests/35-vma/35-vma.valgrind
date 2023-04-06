@@ -1,15 +1,15 @@
-==3390== Memcheck, a memory error detector
-==3390== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
-==3390== Using Valgrind-3.15.0 and LibVEX; rerun with -h for copyright info
-==3390== Command: /mnt/c/Users/alins/OneDrive/Desktop/SDA_tema1/vma
-==3390== Parent PID: 3389
-==3390== 
-==3390== 
-==3390== HEAP SUMMARY:
-==3390==     in use at exit: 0 bytes in 0 blocks
-==3390==   total heap usage: 106,076 allocs, 106,076 frees, 2,897,848 bytes allocated
-==3390== 
-==3390== All heap blocks were freed -- no leaks are possible
-==3390== 
-==3390== For lists of detected and suppressed errors, rerun with: -s
-==3390== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+==1722== Memcheck, a memory error detector
+==1722== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==1722== Using Valgrind-3.15.0 and LibVEX; rerun with -h for copyright info
+==1722== Command: /mnt/c/Users/alins/OneDrive/Desktop/SDA_tema1/vma
+==1722== Parent PID: 1721
+==1722== 
+==1722== 
+==1722== HEAP SUMMARY:
+==1722==     in use at exit: 0 bytes in 0 blocks
+==1722==   total heap usage: 106,076 allocs, 106,076 frees, 2,897,848 bytes allocated
+==1722== 
+==1722== All heap blocks were freed -- no leaks are possible
+==1722== 
+==1722== For lists of detected and suppressed errors, rerun with: -s
+==1722== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

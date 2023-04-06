@@ -1,25 +1,25 @@
-==3430== Memcheck, a memory error detector
-==3430== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
-==3430== Using Valgrind-3.15.0 and LibVEX; rerun with -h for copyright info
-==3430== Command: /mnt/c/Users/alins/OneDrive/Desktop/SDA_tema1/vma
-==3430== Parent PID: 3429
-==3430== 
-==3430== 
-==3430== HEAP SUMMARY:
-==3430==     in use at exit: 6 bytes in 1 blocks
-==3430==   total heap usage: 12 allocs, 11 frees, 1,238 bytes allocated
-==3430== 
-==3430== 6 bytes in 1 blocks are still reachable in loss record 1 of 1
-==3430==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
-==3430==    by 0x10A6D7: create_string (vma.c:437)
-==3430==    by 0x1096DB: main (main.c:67)
-==3430== 
-==3430== LEAK SUMMARY:
-==3430==    definitely lost: 0 bytes in 0 blocks
-==3430==    indirectly lost: 0 bytes in 0 blocks
-==3430==      possibly lost: 0 bytes in 0 blocks
-==3430==    still reachable: 6 bytes in 1 blocks
-==3430==         suppressed: 0 bytes in 0 blocks
-==3430== 
-==3430== For lists of detected and suppressed errors, rerun with: -s
-==3430== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+==1762== Memcheck, a memory error detector
+==1762== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==1762== Using Valgrind-3.15.0 and LibVEX; rerun with -h for copyright info
+==1762== Command: /mnt/c/Users/alins/OneDrive/Desktop/SDA_tema1/vma
+==1762== Parent PID: 1761
+==1762== 
+==1762== 
+==1762== HEAP SUMMARY:
+==1762==     in use at exit: 6 bytes in 1 blocks
+==1762==   total heap usage: 12 allocs, 11 frees, 1,238 bytes allocated
+==1762== 
+==1762== 6 bytes in 1 blocks are still reachable in loss record 1 of 1
+==1762==    at 0x483B7F3: malloc (in /usr/lib/x86_64-linux-gnu/valgrind/vgpreload_memcheck-amd64-linux.so)
+==1762==    by 0x10A6D7: create_string (vma.c:439)
+==1762==    by 0x1096DB: main (main.c:68)
+==1762== 
+==1762== LEAK SUMMARY:
+==1762==    definitely lost: 0 bytes in 0 blocks
+==1762==    indirectly lost: 0 bytes in 0 blocks
+==1762==      possibly lost: 0 bytes in 0 blocks
+==1762==    still reachable: 6 bytes in 1 blocks
+==1762==         suppressed: 0 bytes in 0 blocks
+==1762== 
+==1762== For lists of detected and suppressed errors, rerun with: -s
+==1762== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

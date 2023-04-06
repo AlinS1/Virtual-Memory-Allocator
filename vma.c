@@ -1,3 +1,4 @@
+// Similea Alin-Andrei 314CA
 #include "vma.h"
 
 #include "list.h"
@@ -319,7 +320,7 @@ void free_block(arena_t *arena, const uint64_t address)
 
 			// Add the miniblocks after the freed miniblock to the new list.
 			node_t *next = minib_curr_node->next;
-			while (minib_list->total_elements - j) {
+			while (minib_list->total_elements - j) {  // j=freed miniblock's idx
 				ll_add_nth_node(new_minib_list, new_minib_list->total_elements,
 								minib_curr_node->data);
 				new_minib = (miniblock_t *)minib_curr_node->data;
@@ -370,15 +371,15 @@ void read(arena_t *arena, uint64_t address, uint64_t size)
 		if (minib_curr->start_address <= address && address <= end_minib) {
 			// Found first miniblock from which we read.
 
-			if (!check_permission(minib_list, minib_curr_node, size, j, 4)) {
-				printf("Invalid permissions for read.\n");
-				return;
-			}
-
 			if (end_block_curr - address + 1 < size) {
 				printf("Warning: size was bigger than the block size.");
 				size = end_block_curr - address + 1;
 				printf(" Reading %ld characters.\n", size);
+			}
+
+			if (!check_permission(minib_list, minib_curr_node, size, j, 4)) {
+				printf("Invalid permissions for read.\n");
+				return;
 			}
 
 			unsigned int idx_total_read = 0;  // how many chars have been read
@@ -403,6 +404,7 @@ void read(arena_t *arena, uint64_t address, uint64_t size)
 				}
 				j++;
 			}
+
 			// Continue the reading from the following miniblocks.
 			for (unsigned int l = j; l < minib_list->total_elements; l++) {
 				unsigned int idx = 0;
@@ -514,10 +516,6 @@ void write(arena_t *arena, const uint64_t address, const uint64_t size,
 		uint64_t end_mb_curr = minib_curr->start_address + minib_curr->size - 1;
 		if (minib_curr->start_address <= address && address <= end_mb_curr) {
 			// Miniblock found
-			if (!check_permission(minib_list, minib_curr_node, size, j, 2)) {
-				printf("Invalid permissions for write.\n");
-				return;
-			}
 
 			if (end_block_curr - address + 1 < size) {
 				printf("Warning: size was bigger than the block size.");
@@ -525,9 +523,14 @@ void write(arena_t *arena, const uint64_t address, const uint64_t size,
 					   end_block_curr - address + 1);
 			}
 
+			if (!check_permission(minib_list, minib_curr_node, size, j, 2)) {
+				printf("Invalid permissions for write.\n");
+				return;
+			}
+
 			unsigned int idx_data = 0;	// the index of the current char in data
 
-			for (unsigned int l = j; l < minib_list->total_elements; l++) {
+			for (uint64_t l = j; l < minib_list->total_elements; l++) {
 				unsigned int idx_minib = 0;	 // index of curr byte in miniblock
 				minib_curr->rw_buffer = malloc(minib_curr->size * sizeof(char));
 				DIE(!minib_curr->rw_buffer, "malloc failed");
@@ -716,7 +719,7 @@ int check_permission(list_t *minib_list, node_t *minib_node, uint64_t size,
 	miniblock_t *minib_curr = (miniblock_t *)minib_curr_node->data;
 	unsigned int idx_data = 0;
 
-	for (unsigned int l = j; l < minib_list->total_elements && idx_data < size;
+	for (unsigned int l = j; l < minib_list->total_elements || idx_data < size;
 		 l++) {
 		idx_data += minib_curr->size;
 

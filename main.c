@@ -1,3 +1,4 @@
+// Similea Alin-Andrei 314CA
 #include "list.h"
 #include "vma.h"
 #define NMAX_LINE 100
